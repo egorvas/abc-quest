@@ -1,0 +1,28 @@
+.sprog {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  justify-content: center;
+}
+
+.sprog__dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.sprog__dot--current {
+  background: var(--amber);
+  transform: scale(1.45);
+  box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.22);
+}
+
+.sprog__dot--good {
+  background: var(--mint);
+}
+
+.sprog__dot--retry {
+  background: var(--sky);
+}

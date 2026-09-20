@@ -1,0 +1,77 @@
+.amap {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(74px, 1fr));
+  gap: 10px;
+  width: 100%;
+  padding: 6px 2px 14px;
+  overflow-y: auto;
+}
+
+.amap--compact {
+  grid-template-columns: repeat(13, 1fr);
+  gap: 6px;
+}
+
+.amap__cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: var(--r-sm);
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  font-family: var(--font-letter);
+  font-weight: 800;
+  font-size: clamp(20px, 3.4vw, 34px);
+  transition: transform 0.12s ease;
+}
+
+.amap__cell:active:not(:disabled) {
+  transform: scale(0.93);
+}
+
+.amap__glyph {
+  opacity: 0.92;
+}
+
+.amap__stars {
+  position: absolute;
+  bottom: 4px;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  letter-spacing: -1px;
+  color: var(--amber);
+}
+
+.amap--compact .amap__stars {
+  display: none;
+}
+
+.amap__cell--locked .amap__glyph {
+  opacity: 0.3;
+}
+
+.amap__cell--new {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.amap__cell--learning {
+  background: linear-gradient(165deg, rgba(56, 189, 248, 0.5), rgba(56, 189, 248, 0.18));
+  border-color: rgba(125, 211, 252, 0.6);
+}
+
+.amap__cell--strong {
+  background: linear-gradient(165deg, rgba(52, 211, 153, 0.55), rgba(52, 211, 153, 0.2));
+  border-color: rgba(167, 243, 208, 0.7);
+}
+
+.amap__cell--mastered {
+  background: linear-gradient(165deg, #fde68a, var(--amber));
+  border-color: #fff7cd;
+  color: #3b2606;
+  box-shadow: 0 0 18px rgba(251, 191, 36, 0.4);
+}
+
+.amap__cell--mastered .amap__stars {
+  color: #7c4a03;
+}
