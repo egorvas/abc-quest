@@ -56,13 +56,18 @@
   align-content: center;
 }
 
+.mode__grid--1,
 .mode__grid--2 { grid-template-columns: repeat(2, auto); }
 .mode__grid--3 { grid-template-columns: repeat(3, auto); }
 .mode__grid--4 { grid-template-columns: repeat(2, auto); }
+.mode__grid--5,
 .mode__grid--6 { grid-template-columns: repeat(3, auto); }
 
+/* Wide enough for one row of four, and two rows of three read better than
+   three rows of two on a tall screen. */
 @media (orientation: landscape) {
   .mode__grid--4 { grid-template-columns: repeat(4, auto); }
+  .mode__grid--5,
   .mode__grid--6 { grid-template-columns: repeat(3, auto); }
 }
 

@@ -9,7 +9,7 @@ import { NEW_CELL, recall } from './memory'
 import { INTRO_ORDER, sameRhymeFamily } from './curriculum'
 import { contrastDecision, partnersOf } from './confusion'
 import { TUNING } from './tuning'
-import { letterStatus } from './mastery'
+import { letterStability, letterStatus } from './mastery'
 
 /**
  * Builds the queue of questions for one session.
@@ -83,11 +83,19 @@ function bucketOf(p: number, attempted: boolean): Bucket {
   return 'easy'
 }
 
-/** Letters the child has met but not finished. */
+/**
+ * Letters the child is still juggling.
+ *
+ * Deliberately not "not yet mastered": mastery needs success on two different
+ * days, so on a first enthusiastic afternoon nothing can be mastered and the
+ * curriculum would stall at six letters forever. What matters for pacing is
+ * how many letters are still shaky right now.
+ */
 function openLetters(profile: Profile, now: number): readonly LetterId[] {
-  return profile.introduced.filter(
-    (letter) => letterStatus(profile, letter, now).stage !== 'mastered',
-  )
+  return profile.introduced.filter((letter) => {
+    if (letterStatus(profile, letter, now).stage === 'mastered') return false
+    return letterStability(profile, letter) < TUNING.settledHalfLifeDays
+  })
 }
 
 /** Decides whether a fresh letter joins the curriculum this session. */
@@ -248,9 +256,11 @@ export function pickDistractors(
   count: number,
   level: Level,
   now: number,
+  /** Letters in play this session. Widened when there are too few to choose. */
+  pool: readonly LetterId[],
 ): readonly LetterId[] {
   if (count <= 0) return []
-  const introduced = profile.introduced.length >= 4 ? profile.introduced : LETTER_IDS
+  const introduced = pool.length > count ? pool : LETTER_IDS
   const targetRecall = Math.max(
     ...CORE_SKILLS.map((skill) => cellRecall(profile, target, skill, 'upper', now)),
   )
@@ -416,7 +426,14 @@ export function buildSession(
       skill: candidate.skill,
       glyphCase: candidate.glyphCase,
       level: itemLevel,
-      distractors: pickDistractors(profile, candidate.letter, distractorCount, itemLevel, now),
+      distractors: pickDistractors(
+        profile,
+        candidate.letter,
+        distractorCount,
+        itemLevel,
+        now,
+        letters,
+      ),
       reason: candidate.bucket,
     }
   })

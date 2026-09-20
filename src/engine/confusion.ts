@@ -27,14 +27,18 @@ export function recordConfusion(
   return { ...map, [k]: Math.min(5, (map[k] ?? 0) + 1) }
 }
 
+/** Keeps the map from growing without bound in storage. */
+const MAX_PAIRS = 60
+
 /** Called once per session: old mistakes should stop haunting the child. */
 export function decayConfusions(map: ConfusionMap): ConfusionMap {
-  const next: Record<string, number> = {}
+  const faded: [string, number][] = []
   for (const [k, weight] of Object.entries(map)) {
-    const faded = weight * TUNING.confusionDecay
-    if (faded >= 0.25) next[k] = faded
+    const value = weight * TUNING.confusionDecay
+    if (value >= 0.25) faded.push([k, value])
   }
-  return next
+  faded.sort((a, b) => b[1] - a[1])
+  return Object.fromEntries(faded.slice(0, MAX_PAIRS))
 }
 
 export function confusionWeight(

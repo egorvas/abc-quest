@@ -1,7 +1,7 @@
 import type { LetterId } from '../data/letters'
 import type { Cell } from './memory'
 import { NEW_CELL, isSolid, recall } from './memory'
-import { coreCellsOf, cellsOf } from './skills'
+import { CORE_SKILLS, cellKey, coreCellsOf, cellsOf } from './skills'
 import { TUNING } from './tuning'
 import type { Profile } from '../storage/schema'
 import { partnersOf } from './confusion'
@@ -49,7 +49,17 @@ export function letterStatus(
     core.length === 0 ? 0 : core.reduce((sum, c) => sum + recall(c, now), 0) / core.length
 
   // Gate 1 - breadth: every core channel has a solid trace, not just tapping.
-  const breadth = core.every(isSolid)
+  // Recognition has to hold for both shapes, because telling "B" from "b" is
+  // the point. Naming and writing count once the child can do them for either
+  // shape: writing a lowercase g is a motor skill, not knowledge of the letter.
+  const breadth =
+    CORE_SKILLS.every((skill) => {
+      const cases = [
+        cellOf(profile, cellKey(letter, skill, 'upper')),
+        cellOf(profile, cellKey(letter, skill, 'lower')),
+      ]
+      return skill === 'spot' ? cases.every(isSolid) : cases.some(isSolid)
+    })
 
   // Gate 2 - anti-guess: enough evidence that cannot be luck.
   const guessable = all.reduce((sum, c) => sum + c.kg, 0)
@@ -101,4 +111,20 @@ export function allStatuses(
 
 export function masteredCount(statuses: readonly LetterStatus[]): number {
   return statuses.filter((s) => s.stage === 'mastered').length
+}
+
+/**
+ * How settled a letter is, in days of half-life, averaged over the channels
+ * the child has actually practised.
+ *
+ * Pacing uses this rather than momentary recall. Recall always looks low at the
+ * start of a session, because a night has passed; stability does not, so the
+ * curriculum keeps moving instead of stalling on the same six letters.
+ */
+export function letterStability(profile: Profile, letter: LetterId): number {
+  const cells = coreCellsOf(letter)
+    .map((key) => cellOf(profile, key))
+    .filter((cell) => cell.n > 0)
+  if (cells.length === 0) return 0
+  return cells.reduce((sum, cell) => sum + cell.h, 0) / cells.length
 }

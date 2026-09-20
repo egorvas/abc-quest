@@ -10,9 +10,11 @@ export const DAY_MS = 24 * 60 * 60 * 1000
 export const TUNING = {
   /* ---- forgetting ---- */
   /** Half-life, in days, granted by the very first correct answer. */
-  seedHalfLifeDays: 0.3,
+  seedHalfLifeDays: 0.5,
   /** Floor after a mistake: a lapsed letter is due again almost immediately. */
   minHalfLifeDays: 0.15,
+  /** A letter this settled stops blocking the next one from being introduced. */
+  settledHalfLifeDays: 2.5,
   /** A cell above this half-life counts as solid. */
   solidHalfLifeDays: 7,
   /** Ceiling. Beyond three weeks the difference stops mattering to a child. */
@@ -24,7 +26,7 @@ export const TUNING = {
    * The surprise term is what stops "easy wins" from inflating mastery: a
    * correct answer about a letter seen twenty seconds ago teaches nothing.
    */
-  gain: 2.0,
+  gain: 2.4,
   /** Fraction of the half-life kept after a wrong answer. */
   lapse: 0.4,
   /** An answer the game had to reveal is worth a fraction of an unaided one. */

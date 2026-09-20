@@ -76,7 +76,6 @@ export function HearPick({ item, onDone, seq }: ModeProps) {
     tracker.registerMiss(picked)
   }
 
-  const columns = tiles.length <= 2 ? 2 : tiles.length <= 4 ? 4 : 6
   const size = tiles.length <= 3 ? 'lg' : 'md'
 
   return (
@@ -88,7 +87,7 @@ export function HearPick({ item, onDone, seq }: ModeProps) {
           fallback={item.glyphCase === 'lower' ? letterInfo(item.letter).lower : item.letter}
         />
       </div>
-      <div className={`mode__grid mode__grid--${columns}`}>
+      <div className={`mode__grid mode__grid--${tiles.length}`}>
         {tiles.map((tile, index) => (
           <LetterTile
             key={tile}

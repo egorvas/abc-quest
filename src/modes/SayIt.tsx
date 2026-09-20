@@ -34,19 +34,16 @@ export function SayIt({ item, onDone, seq }: ModeProps) {
   const info = letterInfo(item.letter)
   const glyph = item.glyphCase === 'lower' ? info.lower : item.letter
 
-  useEffect(() => {
-    setMic('idle')
-    setNote('')
-    setEchoMode(!speechRecognitionSupported())
-    return () => handle.current?.stop()
-  }, [seq])
-
-  // The question itself is spoken once, then the microphone waits.
+  // The question is spoken once, then the microphone waits for a tap.
   useEffect(() => {
     const timer = window.setTimeout(() => {
       void speak('What letter is this?')
     }, 300)
-    return () => window.clearTimeout(timer)
+    return () => {
+      window.clearTimeout(timer)
+      handle.current?.stop()
+      stopSpeaking()
+    }
   }, [seq])
 
   const succeed = (assistedByEcho: boolean) => {
