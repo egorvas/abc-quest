@@ -171,6 +171,7 @@ function modeForLetter(
   bucket: Bucket,
   used: Map<ModeId, number>,
   length: number,
+  expert: boolean,
 ): ModeId {
   // A letter the child has never seen is introduced by recognising it, never
   // by being asked to say or write it. Meeting a glyph for the first time in a
@@ -191,7 +192,12 @@ function modeForLetter(
   // so weakest-first would hand out nothing but tracing and typing. Production
   // as a whole is capped, on top of each mode's own share.
   const demandingUsed = DEMANDING.reduce((sum, id) => sum + (used.get(id) ?? 0), 0)
-  const demandingCap = Math.max(2, Math.round(length * TUNING.demandingShareCap))
+  const demandingCap = Math.max(
+    2,
+    Math.round(
+      length * (expert ? TUNING.expertDemandingShareCap : TUNING.demandingShareCap),
+    ),
+  )
 
   const scored = pool.map((id) => {
     const mode = MODES[id]
@@ -200,7 +206,9 @@ function modeForLetter(
     // Core skills first, then whichever channel is weakest. A mode that has
     // used up its share of the round is pushed to the back of the queue.
     const corePriority = CORE_SKILLS.includes(mode.skill) ? 0 : 0.25
-    const cap = Math.max(1, Math.round(length * mode.maxShare))
+    // Expert rounds lean on production, so the slow exercises get room.
+    const shareCap = expert && DEMANDING.includes(id) ? mode.maxShare * 1.6 : mode.maxShare
+    const cap = Math.max(1, Math.round(length * shareCap))
     // Recall sits in 0..1, so a penalty above 1 is what makes a quota bind at
     // all: below that the untouched writing channel always wins on weakness.
     const overuse = Math.max(0, (used.get(id) ?? 0) - cap + 1) * 1.2
@@ -250,6 +258,7 @@ function buildCandidates(
       bucket,
       used,
       length,
+      options.difficulty === 4,
     )
     const mode = MODES[modeId]
     const glyphCase = chooseCase(profile, letter, mode.skill, now, options.caseMode)
@@ -336,6 +345,7 @@ export function pickDistractors(
         partnerRecall,
         targetCell.n,
         targetCell.cc,
+        level === 4,
       )
       if (decision.ban) {
         banned.add(candidate)
@@ -350,7 +360,9 @@ export function pickDistractors(
     allowed.push(candidate)
   }
 
-  // Level 1 deliberately avoids rhyme-family neighbours; level 3 seeks one out.
+  // Level 1 keeps rhyme-family neighbours away; level 3 slips one in; level 4
+  // fills the screen with them, because telling "bee" from "dee" and "pee" is
+  // the whole difficulty once the shapes themselves are known.
   const sameFamily = allowed.filter((l) => sameRhymeFamily(l, target))
   const otherFamily = allowed.filter((l) => !sameRhymeFamily(l, target))
   const ordered =
@@ -358,7 +370,9 @@ export function pickDistractors(
       ? [...shuffle(otherFamily), ...shuffle(sameFamily)]
       : level === 3
         ? [...shuffle(sameFamily).slice(0, 1), ...shuffle(otherFamily), ...shuffle(sameFamily).slice(1)]
-        : shuffle([...otherFamily, ...sameFamily])
+        : level === 4
+          ? [...shuffle(sameFamily), ...shuffle(otherFamily)]
+          : shuffle([...otherFamily, ...sameFamily])
 
   const result: LetterId[] = []
   if (contrastPick && level >= 2) result.push(contrastPick)
@@ -451,9 +465,12 @@ export function buildSession(
   // length: one candidate is built per letter, and the round is drawn from
   // them, so a quota counted in items would be exhausted long before the last
   // letter got a say.
+  // Shuffled, because mode quotas are filled in order: with the letters in a
+  // fixed sequence the first half of the alphabet would take every production
+  // slot and the second half would only ever be tapped.
   const candidates = buildCandidates(
     profile,
-    letters,
+    shuffle(letters),
     modeIds,
     now,
     options,
@@ -491,7 +508,9 @@ export function buildSession(
   // Draw from what is left in the pool before repeating anything already
   // picked, otherwise the same three letters come back all round and drag
   // their exercise with them.
-  const unused = pool.filter((c) => c.bucket !== 'new').sort((a, b) => a.p - b.p)
+  // Ties broken at random: when every letter is equally well known, a stable
+  // sort would hand the whole round to whichever exercises came first.
+  const unused = shuffle(pool.filter((c) => c.bucket !== 'new')).sort((a, b) => a.p - b.p)
   const repeats = picked.filter((c) => c.bucket !== 'new')
   const fillPool = [
     ...unused,
@@ -528,6 +547,9 @@ export function buildSession(
         now,
         letters,
       ),
+      // Once the shapes themselves are known, sorting A from a on the same
+      // screen is where the remaining difficulty lives.
+      mixedCaseOptions: itemLevel >= 3 && options.caseMode === 'mixed',
       reason: candidate.bucket,
     }
   })
@@ -548,11 +570,14 @@ function pickLevel(candidate: Candidate, difficulty: Difficulty): Level {
 
   if (difficulty === 'auto') {
     if (candidate.bucket === 'weak') return 1
+    if (candidate.stability >= TUNING.expertHalfLifeDays) return 4
     if (candidate.stability >= TUNING.solidHalfLifeDays) return 3
     if (candidate.stability >= TUNING.settledHalfLifeDays) return 2
     return 1
   }
 
-  if (candidate.bucket === 'weak' && difficulty === 3) return 2
+  // A fixed level still steps down for a letter the child is currently losing:
+  // twelve tiles is not a lesson, it is a lottery.
+  if (candidate.bucket === 'weak' && difficulty >= 3) return (difficulty - 2) as Level
   return difficulty
 }

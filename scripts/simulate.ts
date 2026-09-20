@@ -158,7 +158,7 @@ console.log(
 )
 console.log(
   'levels: ' +
-    [1, 2, 3].map((l) => `L${l} ${share(totals.byLevel[l] ?? 0)}`).join('  '),
+    [1, 2, 3, 4].map((l) => `L${l} ${share(totals.byLevel[l] ?? 0)}`).join("  "),
 )
 console.log(
   'modes: ' +

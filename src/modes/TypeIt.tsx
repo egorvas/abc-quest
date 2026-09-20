@@ -36,7 +36,7 @@ export function TypeIt({ item, onDone, seq }: ModeProps) {
   const [typed, setTyped] = useState<LetterId | null>(null)
   const [locked, setLocked] = useState(false)
   const info = letterInfo(item.letter)
-  const layout: KeyboardLayout = item.level === 3 ? 'qwerty' : 'abc'
+  const layout: KeyboardLayout = item.level >= 3 ? 'qwerty' : 'abc'
   const lowercase = item.glyphCase === 'lower'
 
   const handleKey = (key: LetterId) => {

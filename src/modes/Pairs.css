@@ -12,9 +12,11 @@
 .pairs__grid--4 { grid-template-columns: repeat(4, auto); }
 .pairs__grid--5 { grid-template-columns: repeat(5, auto); }
 .pairs__grid--6 { grid-template-columns: repeat(4, auto); }
+.pairs__grid--8 { grid-template-columns: repeat(4, auto); }
 
 @media (orientation: landscape) {
   .pairs__grid--6 { grid-template-columns: repeat(6, auto); }
+  .pairs__grid--8 { grid-template-columns: repeat(8, auto); }
 }
 
 .pairs__card {

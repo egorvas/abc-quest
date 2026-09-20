@@ -80,7 +80,7 @@ export function FirstSound({ item, onDone, seq }: ModeProps) {
                 key={option}
                 letter={option}
                 letterCase={item.glyphCase}
-                size="md"
+                size={options.length >= 5 ? 'sm' : 'md'}
                 state={
                   dead.includes(option)
                     ? 'dim'

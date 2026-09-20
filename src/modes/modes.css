@@ -62,6 +62,14 @@
 .mode__grid--4 { grid-template-columns: repeat(2, auto); }
 .mode__grid--5,
 .mode__grid--6 { grid-template-columns: repeat(3, auto); }
+/* The expert boards: eight and twelve tiles still have to fit on one screen
+   without scrolling, in either orientation. */
+.mode__grid--7,
+.mode__grid--8 { grid-template-columns: repeat(4, auto); }
+.mode__grid--9 { grid-template-columns: repeat(3, auto); }
+.mode__grid--10,
+.mode__grid--11,
+.mode__grid--12 { grid-template-columns: repeat(4, auto); }
 
 /* Wide enough for one row of four, and two rows of three read better than
    three rows of two on a tall screen. */
@@ -69,6 +77,10 @@
   .mode__grid--4 { grid-template-columns: repeat(4, auto); }
   .mode__grid--5,
   .mode__grid--6 { grid-template-columns: repeat(3, auto); }
+  .mode__grid--9 { grid-template-columns: repeat(5, auto); }
+  .mode__grid--10,
+  .mode__grid--11,
+  .mode__grid--12 { grid-template-columns: repeat(6, auto); }
 }
 
 .mode__big {

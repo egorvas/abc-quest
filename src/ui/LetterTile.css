@@ -20,7 +20,7 @@
   text-shadow: 0 3px 0 rgba(0, 0, 0, 0.22);
 }
 
-.tile--sm { width: 64px; font-size: 34px; }
+.tile--sm { width: clamp(64px, 10vh, 104px); font-size: clamp(34px, 5.6vh, 58px); }
 .tile--md { width: clamp(104px, 15vh, 150px); font-size: clamp(58px, 8.5vh, 84px); }
 .tile--lg { width: clamp(150px, 22vh, 220px); font-size: clamp(88px, 13vh, 130px); }
 .tile--xl { width: min(46vh, 300px); font-size: min(30vh, 190px); border-radius: var(--r-lg); }

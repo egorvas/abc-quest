@@ -52,10 +52,14 @@ export function useAttempt(
     }
   }, [seq])
 
+  // An expert question is meant to be fought with, so the game waits one more
+  // attempt before handing over the answer.
+  const revealAt = TUNING.missesBeforeReveal + (item.level === 4 ? 1 : 0)
+
   const registerMiss = useCallback((picked: LetterId | null) => {
     setMisses((count) => {
       const next = count + 1
-      if (next >= TUNING.missesBeforeReveal) {
+      if (next >= revealAt) {
         setHinting(true)
         setRevealed(true)
       } else if (next >= TUNING.missesBeforeHint) {
@@ -64,7 +68,7 @@ export function useAttempt(
       return next
     })
     if (picked) setWrongPicks((list) => [...list, picked])
-  }, [])
+  }, [revealAt])
 
   const verdictFor = useCallback(
     (picked: LetterId): Verdict => {

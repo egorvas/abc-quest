@@ -17,6 +17,8 @@ export const TUNING = {
   settledHalfLifeDays: 2.5,
   /** A cell above this half-life counts as solid. */
   solidHalfLifeDays: 7,
+  /** Past this, automatic difficulty starts asking expert-level questions. */
+  expertHalfLifeDays: 18,
   /** Ceiling. Beyond three weeks the difference stops mattering to a child. */
   maxHalfLifeDays: 120,
   masterHalfLifeDays: 21,
@@ -57,6 +59,12 @@ export const TUNING = {
    * means recognition, so weakest-first would otherwise hand out nothing else.
    */
   demandingShareCap: 0.35,
+  /**
+   * At the expert level the emphasis flips: a child who reads the alphabet
+   * learns nothing more from picking a tile out of four, so most of the round
+   * asks them to say, type or write the letter instead.
+   */
+  expertDemandingShareCap: 0.55,
   /** At most one brand-new letter per session... */
   maxNewPerSession: 1,
   /** ...and only while this few letters are still unfinished. */
@@ -84,6 +92,8 @@ export const TUNING = {
   confusionDecay: 0.92,
   /** A confusable partner may appear as a distractor only above this recall. */
   confusionTargetMin: 0.75,
+  /** The expert level puts the confusable partner on screen as soon as this holds. */
+  confusionEagerTargetMin: 0.6,
   /** ...and only when the partner itself is this well known. */
   confusionPartnerMin: 0.6,
   confusionMinAttempts: 4,

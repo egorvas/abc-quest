@@ -6,6 +6,8 @@ import { letterInSentence } from '../audio/speak'
 import { useAttempt } from './useAttempt'
 import type { ModeProps } from './types'
 import { shuffle } from '../engine/scheduler'
+import { glyphsClash } from '../engine/curriculum'
+import { MODES } from './registry'
 import { playLetterNote } from '../audio/letterNote'
 import { sfx } from '../audio/sfx'
 import { haptic } from '../audio/haptics'
@@ -61,13 +63,19 @@ function buildField(
   }
   const pool = fillers.length > 0 ? fillers : [target]
   for (let i = cells.length; i < size; i += 1) {
+    const letter = pool[i % pool.length]
+    const wantsLower = level >= 2 && i % 3 === 0
+    // A capital I and a lowercase l are the same bar in most faces, so a
+    // filler must never render as the shape the child is hunting for.
+    const lower =
+      wantsLower && glyphsClash(letterInfo(letter).lower, target) ? false : wantsLower
     cells.push({
       key: `f${i}`,
-      letter: pool[i % pool.length],
+      letter,
       isTarget: false,
       face: faces[i % faces.length],
       tilt: level === 1 ? 0 : (Math.random() - 0.5) * 24,
-      lower: level >= 2 && i % 3 === 0,
+      lower,
       hue: Math.floor(Math.random() * 360),
     })
   }
@@ -80,8 +88,8 @@ export function Hunt({ item, onDone, seq }: ModeProps) {
   const [faded, setFaded] = useState<readonly string[]>([])
   const [locked, setLocked] = useState(false)
 
-  const size = item.level === 1 ? 12 : item.level === 2 ? 20 : 28
-  const targetCount = item.level === 1 ? 3 : item.level === 2 ? 4 : 5
+  const size = MODES.hunt.options(item.level)
+  const targetCount = item.level === 1 ? 3 : item.level === 2 ? 4 : item.level === 3 ? 5 : 6
 
   const field = useMemo(
     () => buildField(item.letter, item.distractors, size, targetCount, item.level),
@@ -125,7 +133,9 @@ export function Hunt({ item, onDone, seq }: ModeProps) {
           emoji="🔍"
           fallback={item.letter}
         />
-        <div className="hunt__target">{item.letter}</div>
+        <div className="hunt__target">
+          {item.glyphCase === 'lower' ? letterInfo(item.letter).lower : item.letter}
+        </div>
         <div className="hunt__basket" aria-label={`${caught.length} of ${totalTargets}`}>
           {Array.from({ length: totalTargets }, (_, i) => (
             <span

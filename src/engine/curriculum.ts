@@ -83,6 +83,22 @@ export function staticPartners(letter: LetterId): readonly LetterId[] {
   return CONFUSION_INDEX.get(letter) ?? []
 }
 
+/**
+ * Glyphs that render as the same shape in a sans-serif face.
+ *
+ * Capital I and lowercase l are the same vertical bar in most fonts, so
+ * putting them on one screen is not a hard question, it is an unanswerable
+ * one. Mixing cases on a board has to avoid producing this pair.
+ */
+const IDENTICAL_SHAPES: readonly (readonly [string, string])[] = [['I', 'l']]
+
+export function glyphsClash(a: string, b: string): boolean {
+  if (a === b) return true
+  return IDENTICAL_SHAPES.some(
+    ([x, y]) => (a === x && b === y) || (a === y && b === x),
+  )
+}
+
 /** Extra drilling multiplier for letters that fight the child's first alphabet. */
 export function repetitionMultiplier(letter: LetterId): number {
   return isFalseFriend(letter) ? 1.5 : 1

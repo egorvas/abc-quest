@@ -1,7 +1,13 @@
 import type { LetterId } from '../data/letters'
 import type { GlyphCase, SkillId } from '../engine/skills'
 
-export type Level = 1 | 2 | 3
+/**
+ * 1-3 walk a letter from first meeting to solid. 4 is the expert tier for a
+ * child who already reads the alphabet: many more options on screen, upper and
+ * lower case mixed together, the letter they confuse it with always present,
+ * and most of the round spent producing letters rather than recognising them.
+ */
+export type Level = 1 | 2 | 3 | 4
 
 export const MODE_IDS = [
   'hearPick',
@@ -26,6 +32,12 @@ export interface SessionItem {
   readonly level: Level
   /** Wrong options for this screen, already filtered by the confusion rules. */
   readonly distractors: readonly LetterId[]
+  /**
+   * Draw the wrong options in whichever case they land on rather than all in
+   * the target's case. Finding "b" among A, b, D, e is a different, harder
+   * skill than finding it among four capitals.
+   */
+  readonly mixedCaseOptions: boolean
   /** Why the scheduler picked this item, for the parent screen. */
   readonly reason: 'new' | 'weak' | 'review' | 'easy'
 }

@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { LetterId } from '../data/letters'
 import { letterInfo } from '../data/letters'
-import { LetterTile, type TileState } from '../ui/LetterTile'
+import { LetterTile, glyphOf, type LetterCase, type TileState } from '../ui/LetterTile'
 import { Speaker } from './Speaker'
 import { useAttempt } from './useAttempt'
 import type { ModeProps } from './types'
 import { shuffle } from '../engine/scheduler'
+import { glyphsClash } from '../engine/curriculum'
 import { playLetterNote } from '../audio/letterNote'
 import { sfx } from '../audio/sfx'
 import { haptic } from '../audio/haptics'
@@ -30,6 +31,27 @@ export function HearPick({ item, onDone, seq }: ModeProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [seq],
   )
+
+  // At the harder levels the wrong tiles are a mix of capitals and lowercase,
+  // so the child cannot narrow the board down by shape alone. The target keeps
+  // the case the scheduler asked for, because that is the cell being tested.
+  const caseOf = useMemo(() => {
+    const map = new Map<LetterId, LetterCase>()
+    const targetGlyph = glyphOf(item.letter, item.glyphCase)
+    for (const tile of tiles) {
+      if (tile === item.letter || !item.mixedCaseOptions) {
+        map.set(tile, item.glyphCase)
+        continue
+      }
+      const wanted: LetterCase = Math.random() < 0.5 ? 'upper' : 'lower'
+      // Never let a distractor render as the same shape as the answer: a board
+      // with capital I and lowercase l on it has no right answer to find.
+      const clashes = glyphsClash(glyphOf(tile, wanted), targetGlyph)
+      map.set(tile, clashes ? (wanted === 'upper' ? 'lower' : 'upper') : wanted)
+    }
+    return map
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seq, tiles])
 
   // After two misses the board shrinks to two tiles and the answer glows.
   useEffect(() => {
@@ -76,7 +98,7 @@ export function HearPick({ item, onDone, seq }: ModeProps) {
     tracker.registerMiss(picked)
   }
 
-  const size = tiles.length <= 3 ? 'lg' : 'md'
+  const size = tiles.length <= 3 ? 'lg' : tiles.length <= 6 ? 'md' : 'sm'
 
   return (
     <div className="mode">
@@ -92,7 +114,7 @@ export function HearPick({ item, onDone, seq }: ModeProps) {
           <LetterTile
             key={tile}
             letter={tile}
-            letterCase={item.glyphCase}
+            letterCase={caseOf.get(tile) ?? item.glyphCase}
             size={size}
             tilt={((index % 3) - 1) * 2.5}
             state={states[tile] ?? 'idle'}

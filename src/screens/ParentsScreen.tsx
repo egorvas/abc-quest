@@ -280,11 +280,12 @@ export function ParentsScreen({ onBack, onEditKnown }: ParentsScreenProps) {
               { value: 'auto', label: 'Automatic', note: 'per letter, as it is earned' },
               { value: '1', label: 'Easy', note: '3 options' },
               { value: '2', label: 'Medium', note: '4 options' },
-              { value: '3', label: 'Hard', note: '6 options' },
+              { value: '3', label: 'Hard', note: '8 options' },
+              { value: '4', label: 'Expert', note: '12, cases mixed' },
             ]}
             onChange={(value) =>
               updateSettings({
-                difficulty: value === 'auto' ? 'auto' : (Number(value) as 1 | 2 | 3),
+                difficulty: value === 'auto' ? 'auto' : (Number(value) as 1 | 2 | 3 | 4),
               })
             }
           />
@@ -292,6 +293,14 @@ export function ParentsScreen({ onBack, onEditKnown }: ParentsScreenProps) {
             Difficulty changes how many options are on screen, the size of the hunt
             field, the number of pairs to match and the keyboard layout. A brand-new
             letter is always shown at the easiest level whatever is set here.
+          </p>
+          <p className="pcard__muted">
+            Expert is for a child who already reads the alphabet. Twelve tiles at a
+            time with capitals and lowercase mixed on the same screen, the letter
+            they confuse it with always among the options, rhyming names crowded
+            together, the QWERTY keyboard, tracing with no outline to follow, and
+            most of the round spent saying, typing or writing letters rather than
+            tapping them.
           </p>
         </section>
 

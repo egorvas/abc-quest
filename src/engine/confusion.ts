@@ -88,8 +88,18 @@ export function contrastDecision(
   partnerRecall: number,
   targetAttempts: number,
   targetStreak: number,
+  /** Expert rounds want the contrast as soon as it is safe, not eventually. */
+  eager = false,
 ): ContrastDecision {
   if (targetRecall < TUNING.confusionBanBelow) return { allow: false, ban: true }
+  if (eager) {
+    return {
+      allow:
+        targetRecall >= TUNING.confusionEagerTargetMin &&
+        partnerRecall >= TUNING.confusionBanBelow,
+      ban: false,
+    }
+  }
   const allow =
     targetRecall >= TUNING.confusionTargetMin &&
     partnerRecall >= TUNING.confusionPartnerMin &&

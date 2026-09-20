@@ -42,9 +42,31 @@ Three settings in the grown-ups section shape the rest:
   mixed mode `A` and `a` are two separate memory cells and the weaker one gets
   asked, so lowercase is genuinely tested rather than crowded out.
 - **Difficulty** — automatic, where each letter gets the level it has earned,
-  or a fixed easy / medium / hard. This drives how many options are on screen,
-  the size of the hunt field, the number of pairs to match and the keyboard
-  layout.
+  or a fixed easy / medium / hard / expert. This drives how many options are on
+  screen, the size of the hunt field, the number of pairs to match and the
+  keyboard layout.
+
+### Expert
+
+The fourth level is for a child who already reads the alphabet and would learn
+nothing more from picking one tile out of four:
+
+- twelve tiles at a time instead of three, and thirty-six in the hunt;
+- capitals and lowercase mixed on the same screen, so the board cannot be
+  narrowed down by shape;
+- the letter the child confuses with the target is always among the options,
+  and rhyming names are crowded together on purpose;
+- the QWERTY keyboard, and tracing with no outline to follow;
+- most of the round spent saying, typing or writing letters rather than tapping
+  them.
+
+Two capitals and lowercase are never shown together when they render as the
+same shape. Capital I and lowercase l are one vertical bar in this typeface, so
+a board with both on it would have no findable answer.
+
+On automatic difficulty this tier arrives by itself: a letter reaches it once
+its half-life passes about three weeks, which in the simulation is roughly half
+of every round by week six.
 
 ## How the memory model works
 

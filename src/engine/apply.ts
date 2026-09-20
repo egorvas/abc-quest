@@ -71,6 +71,11 @@ export function placeKnownLetters(
     lastDay: today,
   }
 
+  // Naming gets a smaller head start than spotting. "He knows B" almost always
+  // means he points at it, not that he says "bee" unprompted, and if naming
+  // started out as settled as recognition the engine would stop asking for it.
+  const halfHead: Cell = { ...head, h: TUNING.settledHalfLifeDays / 2 }
+
   const cells = { ...profile.cells }
   for (const letter of known) {
     for (const skill of ['spot', 'name'] as const) {
@@ -78,7 +83,7 @@ export function placeKnownLetters(
         const key = cellKey(letter, skill, glyphCase)
         // Never overwrite something the child has actually done.
         if ((cells[key]?.n ?? 0) > 0) continue
-        cells[key] = head
+        cells[key] = skill === 'spot' ? head : halfHead
       }
     }
   }

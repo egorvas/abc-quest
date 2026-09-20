@@ -18,7 +18,7 @@ export type CaseMode = 'upper' | 'lower' | 'mixed'
 export type LetterPool = 'auto' | number
 
 /** 'auto' picks a level per letter from how settled that letter is. */
-export type Difficulty = 'auto' | 1 | 2 | 3
+export type Difficulty = 'auto' | 1 | 2 | 3 | 4
 
 export interface Settings {
   /** Speech recognition modes are hidden when the parent turns this off. */
@@ -179,7 +179,7 @@ function normalisePool(value: unknown): LetterPool {
 }
 
 function normaliseDifficulty(value: unknown): Difficulty {
-  return value === 1 || value === 2 || value === 3 || value === 'auto'
+  return value === 1 || value === 2 || value === 3 || value === 4 || value === 'auto'
     ? value
     : DEFAULT_SETTINGS.difficulty
 }

@@ -36,7 +36,7 @@ export const MODES: Readonly<Record<ModeId, ModeMeta>> = {
     emoji: '👂',
     blurb: 'Hear a letter, tap it',
     skill: 'spot',
-    options: (level) => (level === 1 ? 3 : level === 2 ? 4 : 6),
+    options: (level) => (level === 1 ? 3 : level === 2 ? 4 : level === 3 ? 8 : 12),
     gamma: pick,
     weight: () => CHANNEL_WEIGHT.recognition,
     maxShare: 0.3,
@@ -48,7 +48,7 @@ export const MODES: Readonly<Record<ModeId, ModeMeta>> = {
     emoji: '🔊',
     blurb: 'See a letter, pick its name',
     skill: 'name',
-    options: (level) => (level === 1 ? 2 : level === 2 ? 3 : 4),
+    options: (level) => (level === 1 ? 2 : level === 2 ? 3 : level === 3 ? 5 : 6),
     gamma: pick,
     weight: () => CHANNEL_WEIGHT.recognition,
     maxShare: 0.3,
@@ -87,7 +87,7 @@ export const MODES: Readonly<Record<ModeId, ModeMeta>> = {
     emoji: '🔍',
     blurb: 'Find every copy in the field',
     skill: 'spot',
-    options: (level) => (level === 1 ? 12 : level === 2 ? 20 : 28),
+    options: (level) => (level === 1 ? 12 : level === 2 ? 20 : level === 3 ? 28 : 36),
     // Many tiles, several targets: luck is negligible but not zero.
     gamma: () => 0.08,
     // Finding the letter in unfamiliar shapes is the most valuable recognition.
@@ -101,7 +101,7 @@ export const MODES: Readonly<Record<ModeId, ModeMeta>> = {
     emoji: '🃏',
     blurb: 'Match A with a',
     skill: 'case',
-    options: (level) => (level === 1 ? 4 : level === 2 ? 5 : 6),
+    options: (level) => (level === 1 ? 4 : level === 2 ? 5 : level === 3 ? 6 : 8),
     gamma: () => 0.2,
     weight: () => CHANNEL_WEIGHT.recall,
     maxShare: 0.25,
@@ -117,7 +117,7 @@ export const MODES: Readonly<Record<ModeId, ModeMeta>> = {
     gamma: () => 0.05,
     // Levels 1-2 trace a visible outline: copying. Level 3 is from memory.
     weight: (level) =>
-      level === 3 ? CHANNEL_WEIGHT.production : CHANNEL_WEIGHT.recognition,
+      level >= 3 ? CHANNEL_WEIGHT.production : CHANNEL_WEIGHT.recognition,
     maxShare: 0.15,
     inAdventure: true,
   },
@@ -127,7 +127,7 @@ export const MODES: Readonly<Record<ModeId, ModeMeta>> = {
     emoji: '🍎',
     blurb: 'Which letter the word starts with',
     skill: 'sound',
-    options: (level) => (level === 1 ? 2 : level === 2 ? 3 : 4),
+    options: (level) => (level === 1 ? 2 : level === 2 ? 3 : level === 3 ? 4 : 5),
     gamma: pick,
     weight: () => CHANNEL_WEIGHT.recognition * 1.2,
     maxShare: 0.25,
