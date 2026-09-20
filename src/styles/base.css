@@ -1,0 +1,113 @@
+/* Design tokens and global resets. iPad-first, touch-only assumptions. */
+
+:root {
+  /* Surfaces */
+  --bg-top: #2b1a63;
+  --bg-bottom: #1a1040;
+  --surface: rgba(255, 255, 255, 0.1);
+  --surface-strong: rgba(255, 255, 255, 0.18);
+  --surface-solid: #3a2a7a;
+
+  /* Text */
+  --ink: #ffffff;
+  --ink-dim: rgba(255, 255, 255, 0.72);
+  --ink-faint: rgba(255, 255, 255, 0.45);
+
+  /* Accents */
+  --violet: #8b5cf6;
+  --pink: #ec4899;
+  --amber: #fbbf24;
+  --mint: #34d399;
+  --sky: #38bdf8;
+  --coral: #fb7185;
+  --lime: #a3e635;
+
+  --ok: #34d399;
+  --ok-deep: #059669;
+  --no: #fb7185;
+  --no-deep: #e11d48;
+
+  /* Shape */
+  --r-sm: 14px;
+  --r-md: 22px;
+  --r-lg: 34px;
+  --r-pill: 999px;
+
+  /* Touch */
+  --tap-min: 64px;
+
+  /* Safe areas */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+
+  --font-ui: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-letter: 'Baloo 2', 'Nunito', -apple-system, sans-serif;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: var(--font-ui);
+  font-weight: 800;
+  color: var(--ink);
+  background: linear-gradient(170deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+  background-attachment: fixed;
+  /* Kids poke at everything: no selection, no callout menu, no double-tap zoom. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+input,
+textarea {
+  font: inherit;
+  /* 16px minimum stops iOS Safari from zooming the page on focus. */
+  font-size: max(16px, 1rem);
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Inputs are the only place the caret should show up. */
+:focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
