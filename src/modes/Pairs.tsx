@@ -109,7 +109,7 @@ export function Pairs({ item, onDone, seq }: ModeProps) {
 
   return (
     <div className="mode pairs">
-      <p className="mode__hint">Найди большую и маленькую букву</p>
+      <p className="mode__hint">Find the big and the small letter</p>
       <div className={`pairs__grid pairs__grid--${pairCount}`}>
         {cards.map((card) => {
           const isOpen = open.includes(card.key)
@@ -127,7 +127,7 @@ export function Pairs({ item, onDone, seq }: ModeProps) {
                 .join(' ')}
               onClick={() => handleFlip(card)}
               disabled={isMatched}
-              aria-label={isOpen || isMatched ? letterInfo(card.letter).name : 'Закрытая карточка'}
+              aria-label={isOpen || isMatched ? letterInfo(card.letter).name : 'Face-down card'}
             >
               <span className="pairs__face">
                 {isOpen || isMatched

@@ -53,12 +53,12 @@ export function bedFor(profile: Profile, letter: LetterId, now: number): Bed {
 
   const nextHint =
     stage === 3
-      ? 'Выросло дерево'
+      ? 'Fully grown'
       : stage === 2
-        ? 'Нужно назвать букву голосом или написать её'
+        ? 'Needs the letter said out loud or written'
         : stage === 1
-          ? 'Нужно узнавать букву уверенно'
-          : 'Букву ещё не проходили'
+          ? 'Needs confident recognition'
+          : 'Not started yet'
 
   return {
     letter,

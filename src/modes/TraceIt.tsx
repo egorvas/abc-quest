@@ -52,8 +52,8 @@ export function TraceIt({ item, onDone, seq }: ModeProps) {
     score === null
       ? ''
       : score.coverage >= TUNING.traceCoverage
-        ? 'Отлично!'
-        : 'Веди пальцем по букве'
+        ? 'Nice!'
+        : 'Follow the letter with your finger'
 
   return (
     <div className="mode trace-mode">
@@ -80,7 +80,7 @@ export function TraceIt({ item, onDone, seq }: ModeProps) {
           }}
           disabled={locked}
         >
-          ↺ Сначала
+          ↺ Start over
         </Button>
         {/* A child who will not draw today must still be able to move on. */}
         {tracker.revealed ? (
@@ -94,7 +94,7 @@ export function TraceIt({ item, onDone, seq }: ModeProps) {
             }}
             disabled={locked}
           >
-            Дальше →
+            Next →
           </Button>
         ) : null}
       </div>

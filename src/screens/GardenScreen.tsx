@@ -49,8 +49,8 @@ export function GardenScreen({ onBack }: GardenScreenProps) {
     <Screen className="garden">
       <TopBar
         left={
-          <Button size="sm" tone="ghost" onPress={onBack} ariaLabel="Назад">
-            ← Домой
+          <Button size="sm" tone="ghost" onPress={onBack} ariaLabel="Back">
+            ← Home
           </Button>
         }
         center={<span className="garden__score">🌼 {grown} · 🌳 {trees}</span>}
@@ -90,14 +90,14 @@ export function GardenScreen({ onBack }: GardenScreenProps) {
               {letterInfo(picked).lower}
             </span>
             <span className="garden__detail-word">
-              {letterInfo(picked).emoji} {letterInfo(picked).word} — {letterInfo(picked).wordRu}
+              {letterInfo(picked).emoji} {letterInfo(picked).word}
             </span>
             <span className="garden__detail-hint">
               {beds.find((b) => b.letter === picked)?.nextHint}
             </span>
           </>
         ) : (
-          <span className="garden__detail-hint">Нажми на грядку, чтобы послушать букву</span>
+          <span className="garden__detail-hint">Tap a plot to hear its letter</span>
         )}
       </div>
     </Screen>

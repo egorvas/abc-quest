@@ -16,7 +16,7 @@ export type GlyphCase = 'upper' | 'lower'
 
 export interface SkillMeta {
   readonly id: SkillId
-  readonly labelRu: string
+  readonly label: string
   /** Upper and lower case are separate cells for these skills. */
   readonly caseSensitive: boolean
   /** Counts towards mastery of the letter. */
@@ -25,15 +25,15 @@ export interface SkillMeta {
 
 export const SKILLS: Readonly<Record<SkillId, SkillMeta>> = {
   // Hears the name, finds the glyph.
-  spot: { id: 'spot', labelRu: 'Узнаёт', caseSensitive: true, core: true },
+  spot: { id: 'spot', label: 'Spots it', caseSensitive: true, core: true },
   // Sees the glyph, produces or picks the name.
-  name: { id: 'name', labelRu: 'Называет', caseSensitive: true, core: true },
+  name: { id: 'name', label: 'Names it', caseSensitive: true, core: true },
   // Hears the name, writes or types the glyph with nothing to copy.
-  prod: { id: 'prod', labelRu: 'Пишет и печатает', caseSensitive: true, core: true },
+  prod: { id: 'prod', label: 'Writes and types', caseSensitive: true, core: true },
   // Knows that A and a are the same letter.
-  case: { id: 'case', labelRu: 'Заглавная и строчная', caseSensitive: false, core: false },
+  case: { id: 'case', label: 'Upper and lower case', caseSensitive: false, core: false },
   // Knows the sound the letter makes, not just its name.
-  sound: { id: 'sound', labelRu: 'Знает звук', caseSensitive: false, core: false },
+  sound: { id: 'sound', label: 'Knows the sound', caseSensitive: false, core: false },
 }
 
 export const CORE_SKILLS: readonly SkillId[] = SKILL_IDS.filter((id) => SKILLS[id].core)

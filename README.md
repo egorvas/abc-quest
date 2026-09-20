@@ -1,144 +1,180 @@
 # ABC Quest
 
-Тренажёр английского алфавита для ребёнка 4–6 лет. Веб-приложение для iPad,
-без бэкенда: весь прогресс живёт в `localStorage` этого браузера.
+An English alphabet trainer for a 4-6 year old. A web app for iPad with no
+backend: all progress lives in this browser's `localStorage`.
 
-**Играть: https://egorvas.github.io/abc-quest/**
+**Play: https://egorvas.github.io/abc-quest/**
 
-Интерфейс русский, голос английский, текста почти нет — ребёнок, который ещё не
-читает, должен понимать экран по иконкам.
+Everything in the app is in English, including the interface. There is barely
+any text: a child who cannot read yet navigates by icons.
 
-## Что внутри
+## Games
 
-Восемь режимов, четыре канала памяти и сад из 26 грядок.
+Eight of them, across four memory channels.
 
-| Режим | Что делает ребёнок | Навык |
+| Game | What the child does | Skill |
 |---|---|---|
-| Послушай и найди | слышит имя буквы, нажимает на неё | узнавание |
-| Какая это буква? | видит букву, выбирает её имя среди динамиков | узнавание |
-| Скажи букву | называет букву вслух, приложение распознаёт | воспроизведение |
-| Напечатай букву | находит букву на своей клавиатуре из 26 клавиш | припоминание |
-| Охота за буквой | ищет все копии буквы в поле разных шрифтов | узнавание |
-| Большая и маленькая | собирает пары `A` / `a` | припоминание |
-| Обведи букву | пишет букву пальцем | воспроизведение |
-| A — Apple | связывает букву со звуком и словом | звук |
+| Listen and find | hears a letter, taps it | recognition |
+| Which letter? | sees a letter, picks its name among speakers | recognition |
+| Say the letter | says it out loud, the app listens | production |
+| Type the letter | finds it on a 26-key keyboard | recall |
+| Letter hunt | finds every copy in a field of mixed typefaces | recognition |
+| Big and small | matches `A` with `a` | recall |
+| Trace the letter | writes it with a finger | production |
+| A is for Apple | links the letter to its sound and a word | sound |
 
-## Как устроена память
+## Starting from where the child actually is
 
-Обычные алгоритмы интервального повторения (SM-2, Leitner) здесь не работают:
-они считают календарные дни и ждут самооценки «как хорошо вы помните», а
-пятилетний ребёнок играет не по расписанию и оценить себя не может.
+The first screen asks which letters are already known. Without it, a child who
+knows twenty letters would spend weeks being taught them again, one per
+session, before the app ever reached the six they actually need. Ticked letters
+start as easy wins, so the very first round goes straight to the gaps.
 
-Вместо этого у каждой ячейки памяти есть **период полураспада**, и вероятность
-вспомнить падает непрерывно:
+A parent's estimate is not proof, so the head start stops short of solid: a
+ticked letter still has to hold up in the game before it can earn a star.
+
+Three settings in the grown-ups section shape the rest:
+
+- **How many letters at once** — one by one for a beginner, or a fixed set of
+  8, 16 or all 26. With a fixed set every letter is active and the engine picks
+  the weakest ones out of the pool.
+- **Upper and lower case** — both (the default), or one of them alone. In the
+  mixed mode `A` and `a` are two separate memory cells and the weaker one gets
+  asked, so lowercase is genuinely tested rather than crowded out.
+- **Difficulty** — automatic, where each letter gets the level it has earned,
+  or a fixed easy / medium / hard. This drives how many options are on screen,
+  the size of the hunt field, the number of pairs to match and the keyboard
+  layout.
+
+## How the memory model works
+
+Ordinary spaced repetition (SM-2, Leitner) does not survive contact with a
+five-year-old: it counts calendar days and expects a self-assessment of how
+well you remember. A child plays when a parent hands over the iPad, and cannot
+rate themselves.
+
+Instead every memory cell carries a **half-life**, and the chance of recalling
+it decays continuously:
 
 ```
 p = 2^(-Δt / h)
 ```
 
-Правильный ответ растягивает период полураспада, но с поправкой на удивление:
+A correct answer stretches the half-life, discounted by surprise:
 
 ```
 h' = h · (1 + GAIN · weight · (1 − γ) · (1 − p))
 ```
 
-- `γ` — вероятность угадать (в выборе из четырёх это 0.25),
-- `weight` — вес канала: узнавание ×1.0, припоминание ×1.6, произнесение ×2.2,
-- `(1 − p)` — то самое удивление.
+- `γ` is the chance of being right by luck (0.25 in a one-in-four choice),
+- `weight` is the channel: recognition ×1.0, recall ×1.6, production ×2.2,
+- `(1 − p)` is the surprise.
 
-Поэтому правильный ответ про букву, которую показали двадцать секунд назад,
-почти ничего не даёт. «Лёгкие победы», без которых ребёнок теряет интерес, не
-раздувают мастерство.
+So being right about a letter shown twenty seconds ago is worth almost nothing.
+The easy wins that keep a child playing cannot inflate mastery.
 
-Ячейка — это не буква, а тройка **(буква, навык, регистр)**: восемь ячеек на
-букву. Ребёнок может уверенно тыкать в `B` и не уметь её назвать — движок это
-видит и даёт именно тот режим, который лечит слабый канал.
+A cell is not a letter but a triple of **(letter, skill, case)** — eight cells
+per letter. A child can tap `B` confidently and be unable to name it; the
+engine sees that and picks the exercise that treats the weak channel.
 
-### Золотая звезда
+### The gold star
 
-Буква считается освоенной, только когда сходятся пять ворот: все основные
-каналы прочные, набрано достаточно ответов, которые нельзя было угадать, буква
-узнана в разные дни, она свежа прямо сейчас и выдержала соседство с той буквой,
-с которой её путают. Дотыкать звезду в выборе из трёх невозможно.
+A letter is mastered only when five gates hold at once: every core channel has
+a solid trace, enough answers were unguessable, the letter was known on two
+different days, it still holds right now, and it survived sitting next to the
+letter it gets confused with. Tapping through three-option screens can never
+finish a letter.
 
-Звезду никогда не отбирают: она только тускнеет и просит полировки.
+The star is never taken back. It only dulls and asks to be polished.
 
-### Путаницы и ловушки
+### Confusions and traps
 
-- `b/d`, `p/q`, `M/W`, `C/G` и ещё десяток пар зашиты статически, плюс профиль
-  учит собственные на реальных ошибках.
-- Спутанную букву подсовывают в варианты **только** когда цель уже уверенно
-  знают. Пока буква шаткая, её пару вообще убирают с экрана: контраст до
-  появления независимого следа даёт интерференцию, а не различение.
-- Имена английских букв рифмуются гроздьями (`B C D E G P T V Z`,
-  `F L M N S X`, `A H J K`). Две буквы из одной грозди не вводятся рядом, а
-  ошибка внутри грозди засчитывается как «почти».
-- Латинские `B C H P X Y` русскоязычный ребёнок уже читает иначе, поэтому они
-  стоят в конце порядка ввода.
+- `b/d`, `p/q`, `M/W`, `C/G` and a dozen more pairs are built in, and the
+  profile learns its own from real mistakes.
+- A confusable letter is used as a distractor **only** once the target is known
+  well. While the target is shaky its partner is removed from the screen
+  entirely: contrast before an independent trace exists produces interference,
+  not discrimination.
+- English letter names rhyme in clusters (`B C D E G P T V Z`, `F L M N S X`,
+  `A H J K`). Two letters from one cluster are never introduced together, and a
+  mistake within a cluster counts as "almost".
+- `B C H P X Y` look like Cyrillic letters this child already reads
+  differently, so they come late in the order.
 
-Порядок ввода: `S O D I M R T U L A G N E W F K Z Y X B J C Q V H P`.
+Introduction order: `S O D I M R T U L A G N E W F K Z Y X B J C Q V H P`.
 
-## Награды
+## Rewards
 
-Три горизонта, а не одно конфетти на каждый ответ:
+Three horizons rather than confetti on every answer:
 
-1. **Нота буквы** — на каждый ответ. Высота задана позицией в алфавите, `A`
-   низко, `Z` высоко, шкала пентатоническая, поэтому ошибиться нотой нельзя.
-2. **Семена** — одна вспышка конфетти и 1–3 семени в конце раунда.
-3. **Сад** — 26 грядок. Третья стадия грядки недостижима нажатиями: нужен
-   сигнал произнесения, то есть голос или палец.
+1. **The letter's note** on every answer. Pitch follows the position in the
+   alphabet, `A` low and `Z` high, on a pentatonic scale so nothing can sound
+   wrong.
+2. **Seeds** at the end of a round: one burst of confetti and one to three
+   seeds.
+3. **The garden**, 26 plots. The top stage of a plot cannot be reached by
+   tapping: it needs spoken or written evidence.
 
-Сад не вянет, не голодает и ничего не требует, пока ребёнка нет. Дорожка из
-камней только удлиняется — пропущенный день не является событием.
+The garden never wilts, never gets hungry and asks for nothing while the child
+is away. The stepping-stone path only grows longer, so a missed day is not an
+event.
 
-## Мягкость
+## Being gentle
 
-Одна политика на все режимы: первая ошибка — тихий звук без слов и без
-красного; вторая — приложение само показывает ответ и превращает вопрос в
-«повтори за мной», который невозможно провалить. Двенадцать секунд без действия
-дают подсказку, двадцать пять — автопомощь. Таймеров, штрафов и сравнения с
-кем-либо нет нигде.
+One policy across every game: the first mistake is a quiet sound, no red and no
+words. The second mistake, and the app shows the answer itself and turns the
+question into "say it with me", which cannot be failed. Twelve seconds of
+nothing brings a hint, twenty-five brings help. There are no timers, no
+penalties and no comparison with anyone.
 
-## Родительский экран
+## The grown-ups screen
 
-За простыми воротами (пример на сложение): самые слабые буквы, разбивка по
-навыкам, время и доля верных ответов, переключатели микрофона, звука, строчных
-букв и раскладки, экспорт и импорт профиля файлом.
+Behind a small arithmetic gate: weakest letters, a breakdown by skill, time
+spent and share of first-time-right answers, the settings above, and export and
+import of a profile as a file.
 
-Все цифры выводятся из уже хранящихся записей — ради дашборда ничего
-дополнительно не пишется.
+Every number shown is derived from records the engine already keeps. Nothing
+extra is stored to produce the dashboard.
 
-## Данные
+## Data
 
-- Ключи `abcq:store` и `abcq:store:bak`, вторая копия на случай сорванной
-  записи.
-- Несколько профилей на одном iPad: у каждого ребёнка свой сад.
-- Весь профиль — единицы килобайт, далеко от квоты Safari.
-- **Safari на iOS стирает данные сайта примерно через семь дней без открытия.**
-  Лечится добавлением на домашний экран и кнопкой «Сохранить копию» в
-  родительском разделе.
+- Keys `abcq:store` and `abcq:store:bak`, the second copy in case a write is
+  interrupted.
+- Several profiles on one iPad: each child has their own garden.
+- A whole profile is a few dozen KB, far from Safari's quota.
+- **Safari on iOS erases site data after about seven days without opening it.**
+  Add the page to the home screen and use "Save a copy" in the grown-ups
+  section.
 
-## Разработка
+## Development
 
 ```bash
 npm install
 npm run dev          # http://localhost:5173/abc-quest/
 npm run build
-npm run deploy       # сборка + push в ветку gh-pages
-npm run simulate     # прогон движка на искусственном ребёнке
+npm run deploy       # build, then push to the gh-pages branch
+npm run simulate     # run the engine against a synthetic child
 ```
 
-`simulate` проигрывает приложение без браузера и печатает кривую обучения.
-При двух коротких раундах в день и 85 % точности: шесть букв введены к
-третьему дню, первая золотая звезда около десятого, все 26 освоены примерно
-за полтора месяца. Профиль к этому моменту весит 29 КБ.
+`simulate` plays the app with no browser and prints the learning curve. It
+takes days, rounds per day, accuracy, how many letters are known at the start
+and the letter pool:
 
-Деплой сделан скриптом, а не GitHub Actions: у локального токена нет права
-`workflow`.
+```bash
+npm run simulate -- 21 2 0.85 0 auto    # from nothing
+npm run simulate -- 21 2 0.85 20 26     # knows 20, all 26 in play
+```
 
-## iPad
+Starting from nothing at two short rounds a day: six letters by day three, the
+first gold star around day ten, the whole alphabet in about six weeks. Starting
+from twenty known letters with all 26 in play: twenty mastered in three weeks,
+with 43% of the very first round aimed at the six unknown letters.
 
-Добавьте страницу на домашний экран — приложение откроется во весь экран, без
-адресной строки, и данные проживут дольше. Микрофонный режим требует HTTPS и
-разрешения на микрофон; если распознавание недоступно, режим сам превращается в
-«повтори за мной».
+Deployment is a script rather than a GitHub Actions workflow because the local
+token has no `workflow` scope.
+
+## On the iPad
+
+Add the page to the home screen: it opens full screen with no address bar and
+the data survives longer. The microphone game needs HTTPS and permission; when
+recognition is unavailable the game turns itself into "repeat after me".

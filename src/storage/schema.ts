@@ -4,12 +4,29 @@ import type { CellKey } from '../engine/skills'
 
 export const SCHEMA_VERSION = 1
 
+/** Which shapes the exercises use. */
+export type CaseMode = 'upper' | 'lower' | 'mixed'
+
+/**
+ * How many letters are in play at once.
+ *
+ * 'auto' lets the curriculum introduce them one at a time, which suits a child
+ * starting from nothing. A number keeps that many letters active, so a child
+ * who already knows most of the alphabet can work on all 26 and have the
+ * scheduler pick out the few that are actually weak.
+ */
+export type LetterPool = 'auto' | number
+
+/** 'auto' picks a level per letter from how settled that letter is. */
+export type Difficulty = 'auto' | 1 | 2 | 3
+
 export interface Settings {
   /** Speech recognition modes are hidden when the parent turns this off. */
   readonly micEnabled: boolean
   readonly soundEnabled: boolean
-  /** Lowercase glyphs start appearing once the parent allows it. */
-  readonly lowercaseEnabled: boolean
+  readonly caseMode: CaseMode
+  readonly letterPool: LetterPool
+  readonly difficulty: Difficulty
   readonly keyboardLayout: 'abc' | 'qwerty'
   /** Slower speech for a child who is still tuning in to English. */
   readonly speechRate: number
@@ -18,7 +35,9 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   micEnabled: true,
   soundEnabled: true,
-  lowercaseEnabled: true,
+  caseMode: 'mixed',
+  letterPool: 'auto',
+  difficulty: 'auto',
   keyboardLayout: 'abc',
   speechRate: 0.8,
 }
@@ -54,6 +73,8 @@ export interface Profile {
   readonly lastPlayDay: number
   readonly sessions: readonly SessionSummary[]
   readonly settings: Settings
+  /** The "which letters do you already know" screen has been answered. */
+  readonly placed: boolean
 }
 
 export interface Store {
@@ -84,6 +105,7 @@ export function newProfile(name: string, avatar: string, now: number): Profile {
     lastPlayDay: -1,
     sessions: [],
     settings: DEFAULT_SETTINGS,
+    placed: false,
   }
 }
 
@@ -101,14 +123,15 @@ export function migrate(raw: unknown): Store {
   const profiles = candidate.profiles
     .filter((p): p is Profile => typeof p === 'object' && p !== null && typeof p.id === 'string')
     .map((p): Profile => ({
-      ...newProfile(p.name ?? 'Игрок', p.avatar ?? '🐣', p.createdAt ?? Date.now()),
+      ...newProfile(p.name ?? 'Player', p.avatar ?? '🐣', p.createdAt ?? Date.now()),
       ...p,
       v: SCHEMA_VERSION,
       cells: isRecord(p.cells) ? (p.cells as Record<CellKey, Cell>) : {},
       confusion: isRecord(p.confusion) ? (p.confusion as Record<string, number>) : {},
       introduced: Array.isArray(p.introduced) ? p.introduced : [],
       sessions: Array.isArray(p.sessions) ? p.sessions : [],
-      settings: { ...DEFAULT_SETTINGS, ...(isRecord(p.settings) ? p.settings : {}) },
+      settings: migrateSettings(p.settings),
+      placed: p.placed === true,
     }))
 
   const activeId =
@@ -122,4 +145,41 @@ export function migrate(raw: unknown): Store {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+/**
+ * Settings gain fields over time. Unknown ones fall back to the default, and
+ * the old `lowercaseEnabled` flag becomes the narrower of the case modes.
+ */
+function migrateSettings(raw: unknown): Settings {
+  const stored = isRecord(raw) ? raw : {}
+  const legacyUpperOnly =
+    stored.caseMode === undefined && stored.lowercaseEnabled === false
+  const merged = { ...DEFAULT_SETTINGS, ...stored } as Settings
+  return {
+    ...merged,
+    caseMode: legacyUpperOnly ? 'upper' : normaliseCase(merged.caseMode),
+    letterPool: normalisePool(merged.letterPool),
+    difficulty: normaliseDifficulty(merged.difficulty),
+  }
+}
+
+function normaliseCase(value: unknown): CaseMode {
+  return value === 'upper' || value === 'lower' || value === 'mixed'
+    ? value
+    : DEFAULT_SETTINGS.caseMode
+}
+
+function normalisePool(value: unknown): LetterPool {
+  if (value === 'auto') return 'auto'
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.min(26, Math.max(3, Math.round(value)))
+  }
+  return DEFAULT_SETTINGS.letterPool
+}
+
+function normaliseDifficulty(value: unknown): Difficulty {
+  return value === 1 || value === 2 || value === 3 || value === 'auto'
+    ? value
+    : DEFAULT_SETTINGS.difficulty
 }

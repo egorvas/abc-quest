@@ -126,7 +126,7 @@ export function Hunt({ item, onDone, seq }: ModeProps) {
           fallback={item.letter}
         />
         <div className="hunt__target">{item.letter}</div>
-        <div className="hunt__basket" aria-label={`${caught.length} из ${totalTargets}`}>
+        <div className="hunt__basket" aria-label={`${caught.length} of ${totalTargets}`}>
           {Array.from({ length: totalTargets }, (_, i) => (
             <span
               key={i}

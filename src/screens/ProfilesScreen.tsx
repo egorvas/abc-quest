@@ -32,11 +32,11 @@ export function ProfilesScreen({ onDone, canCancel }: ProfilesScreenProps) {
         left={
           canCancel ? (
             <Button size="sm" tone="ghost" onPress={onDone}>
-              ← Назад
+              ← Back
             </Button>
           ) : null
         }
-        center={<span className="profiles__title">Кто играет?</span>}
+        center={<span className="profiles__title">Who is playing?</span>}
       />
 
       {creating ? (
@@ -57,18 +57,18 @@ export function ProfilesScreen({ onDone, canCancel }: ProfilesScreenProps) {
             className="profiles__input"
             value={name}
             onChange={(e) => setName(e.target.value.slice(0, 16))}
-            placeholder="Имя"
+            placeholder="Name"
             autoComplete="off"
             autoCorrect="off"
             spellCheck={false}
           />
           <div className="profiles__actions">
             <Button onPress={submit} size="lg" tone="mint">
-              Готово
+              Done
             </Button>
             {store.profiles.length > 0 ? (
               <Button onPress={() => setCreating(false)} tone="ghost">
-                Отмена
+                Cancel
               </Button>
             ) : null}
           </div>
@@ -93,18 +93,18 @@ export function ProfilesScreen({ onDone, canCancel }: ProfilesScreenProps) {
                 type="button"
                 className="profiles__remove"
                 onClick={() => {
-                  if (window.confirm(`Удалить профиль «${item.name}» и весь его прогресс?`)) {
+                  if (window.confirm(`Delete ${item.name} and all their progress?`)) {
                     deleteProfile(item.id)
                   }
                 }}
-                aria-label={`Удалить ${item.name}`}
+                aria-label={`Delete ${item.name}`}
               >
                 ✕
               </button>
             </div>
           ))}
           <Button onPress={() => setCreating(true)} size="lg" tone="primary" wide>
-            + Новый игрок
+            + New player
           </Button>
         </div>
       )}

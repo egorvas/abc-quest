@@ -1,0 +1,95 @@
+.known__title {
+  font-size: 19px;
+}
+
+.known__count {
+  font-size: 16px;
+  padding: 8px 14px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  white-space: nowrap;
+}
+
+.known__lead {
+  margin: 4px auto 8px;
+  max-width: 620px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--ink-faint);
+}
+
+.known__grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+  gap: 10px;
+  align-content: start;
+  padding: 4px 2px 10px;
+}
+
+.known__cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.07);
+  border: 3px solid rgba(255, 255, 255, 0.12);
+  transition: transform 0.12s ease, background 0.18s ease, border-color 0.18s ease;
+}
+
+.known__cell:active {
+  transform: scale(0.93);
+}
+
+.known__cell--on {
+  background: linear-gradient(165deg, rgba(52, 211, 153, 0.55), rgba(5, 150, 105, 0.45));
+  border-color: #a7f3d0;
+}
+
+.known__glyph {
+  font-family: var(--font-letter);
+  font-weight: 800;
+  font-size: clamp(26px, 4.6vh, 40px);
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.known__glyph em {
+  font-style: normal;
+  font-size: 0.72em;
+  opacity: 0.75;
+}
+
+.known__tick {
+  position: absolute;
+  top: 5px;
+  right: 8px;
+  font-size: 16px;
+  color: #ecfdf5;
+}
+
+.known__actions {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding-top: 6px;
+}
+
+.known__hint {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-faint);
+}

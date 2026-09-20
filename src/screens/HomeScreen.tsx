@@ -49,7 +49,7 @@ export function HomeScreen({
           <div className="home__stats">
             <span className="home__stat">⭐ {learned}/26</span>
             <span className="home__stat">🌰 {profile.seeds}</span>
-            <Button size="sm" tone="ghost" onPress={onParents} ariaLabel="Для родителей">
+            <Button size="sm" tone="ghost" onPress={onParents} ariaLabel="For grown-ups">
               ⚙️
             </Button>
           </div>
@@ -61,14 +61,14 @@ export function HomeScreen({
 
         <div className="home__cta">
           <Button onPress={onPlay} size="lg" tone="primary">
-            ▶︎ Играть
+            ▶︎ Play
           </Button>
           <Button onPress={onGarden} size="lg" tone="mint">
-            🌱 Мой сад
+            🌱 My garden
           </Button>
         </div>
 
-        <p className="home__section">Выбери игру</p>
+        <p className="home__section">Pick a game</p>
         <div className="home__modes">
           {modes.map((mode) => (
             <button
@@ -78,8 +78,8 @@ export function HomeScreen({
               onClick={() => onPickMode(mode.id)}
             >
               <span className="home__mode-emoji">{mode.emoji}</span>
-              <span className="home__mode-title">{mode.titleRu}</span>
-              <span className="home__mode-blurb">{mode.blurbRu}</span>
+              <span className="home__mode-title">{mode.title}</span>
+              <span className="home__mode-blurb">{mode.blurb}</span>
             </button>
           ))}
         </div>

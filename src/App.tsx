@@ -5,6 +5,7 @@ import { SessionScreen } from './screens/SessionScreen'
 import { GardenScreen } from './screens/GardenScreen'
 import { ParentsScreen } from './screens/ParentsScreen'
 import { ProfilesScreen } from './screens/ProfilesScreen'
+import { KnownLettersScreen } from './screens/KnownLettersScreen'
 import type { ModeId } from './modes/types'
 import { unlockAudio } from './audio/sfx'
 import { warmUpSpeech } from './audio/speak'
@@ -16,6 +17,7 @@ type Route =
   | { readonly name: 'garden' }
   | { readonly name: 'parents' }
   | { readonly name: 'profiles' }
+  | { readonly name: 'known' }
 
 function Router() {
   const { profile } = useGame()
@@ -46,6 +48,18 @@ function Router() {
     return <ProfilesScreen onDone={() => setRoute({ name: 'home' })} canCancel={false} />
   }
 
+  // A brand-new profile is asked what the child already knows before the first
+  // round, so the very first questions are aimed at the actual gaps.
+  if (!profile.placed && route.name === 'home') {
+    return (
+      <KnownLettersScreen
+        firstRun
+        onDone={() => setRoute({ name: 'home' })}
+        onSkip={() => setRoute({ name: 'home' })}
+      />
+    )
+  }
+
   switch (route.name) {
     case 'session':
       return (
@@ -59,7 +73,20 @@ function Router() {
     case 'garden':
       return <GardenScreen onBack={() => setRoute({ name: 'home' })} />
     case 'parents':
-      return <ParentsScreen onBack={() => setRoute({ name: 'home' })} />
+      return (
+        <ParentsScreen
+          onBack={() => setRoute({ name: 'home' })}
+          onEditKnown={() => setRoute({ name: 'known' })}
+        />
+      )
+    case 'known':
+      return (
+        <KnownLettersScreen
+          firstRun={false}
+          onDone={() => setRoute({ name: 'home' })}
+          onSkip={() => setRoute({ name: 'parents' })}
+        />
+      )
     case 'profiles':
       return <ProfilesScreen onDone={() => setRoute({ name: 'home' })} canCancel />
     default:

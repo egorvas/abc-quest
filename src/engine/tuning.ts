@@ -50,6 +50,13 @@ export const TUNING = {
 
   /* ---- session ---- */
   sessionLength: 14,
+  /**
+   * Ceiling on how much of a round asks the child to produce a letter rather
+   * than recognise one. Speaking and writing are the valuable channels, but
+   * they are also the slow ones, and a parent marking a letter as "known"
+   * means recognition, so weakest-first would otherwise hand out nothing else.
+   */
+  demandingShareCap: 0.35,
   /** At most one brand-new letter per session... */
   maxNewPerSession: 1,
   /** ...and only while this few letters are still unfinished. */
@@ -58,6 +65,13 @@ export const TUNING = {
   repeatGap: 3,
   mix: {
     newFrac: 0.15,
+    /**
+     * Ceiling on how much of a round may be spent on letters the child has
+     * never answered. It only binds when there is nothing weak to review -
+     * exactly the case of a child who already knows twenty letters and needs
+     * six. The other half stays easy wins, so the round is still winnable.
+     */
+    newShareCap: 0.5,
     weakBase: 0.45,
     weakSlope: -0.2,
     reviewBase: 0.2,

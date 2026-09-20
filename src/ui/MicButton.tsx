@@ -8,11 +8,11 @@ interface MicButtonProps {
 }
 
 const LABEL: Record<MicState, string> = {
-  idle: 'Нажми и скажи букву',
-  listening: 'Слушаю...',
-  hearing: 'Слышу тебя!',
-  thinking: 'Проверяю...',
-  blocked: 'Микрофон недоступен',
+  idle: 'Tap, then say the letter',
+  listening: 'Listening...',
+  hearing: 'I can hear you!',
+  thinking: 'Checking...',
+  blocked: 'No microphone',
 }
 
 export function MicButton({ state, onPress }: MicButtonProps) {

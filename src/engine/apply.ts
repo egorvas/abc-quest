@@ -1,5 +1,6 @@
 import type { Profile, SessionSummary } from '../storage/schema'
 import type { Attempt } from '../modes/types'
+import type { Cell } from './memory'
 import { applyAnswer, NEW_CELL, dayIndex } from './memory'
 import { cellKey } from './skills'
 import { recordConfusion, decayConfusions } from './confusion'
@@ -37,6 +38,55 @@ export function applyAttempt(profile: Profile, attempt: Attempt, now: number): P
     ...profile,
     cells: { ...profile.cells, [key]: updated },
     confusion,
+  }
+}
+
+/**
+ * Records the answer to "which letters does the child already know".
+ *
+ * Marked letters get a head start on recognition and naming, enough that the
+ * scheduler treats them as easy wins and spends the round on the rest. It is
+ * deliberately short of solid: a parent's estimate is not evidence, so the
+ * letter still has to prove itself before it can earn a star. Writing and
+ * typing are left untouched, because knowing a letter by sight says nothing
+ * about producing it.
+ *
+ * Unmarked letters are introduced as usual and stay at zero.
+ */
+export function placeKnownLetters(
+  profile: Profile,
+  known: readonly LetterId[],
+  now: number,
+): Profile {
+  const today = dayIndex(now)
+  const head: Cell = {
+    h: TUNING.settledHalfLifeDays,
+    t: now,
+    n: 2,
+    k: 2,
+    cc: 2,
+    kg: 2,
+    kp: 0,
+    days: 1,
+    lastDay: today,
+  }
+
+  const cells = { ...profile.cells }
+  for (const letter of known) {
+    for (const skill of ['spot', 'name'] as const) {
+      for (const glyphCase of ['upper', 'lower'] as const) {
+        const key = cellKey(letter, skill, glyphCase)
+        // Never overwrite something the child has actually done.
+        if ((cells[key]?.n ?? 0) > 0) continue
+        cells[key] = head
+      }
+    }
+  }
+
+  return {
+    ...introduceLetters(profile, known),
+    cells,
+    placed: true,
   }
 }
 

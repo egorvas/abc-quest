@@ -1,6 +1,6 @@
 import type { LetterId } from '../data/letters'
 import { LETTER_IDS } from '../data/letters'
-import type { Profile } from '../storage/schema'
+import type { CaseMode, Difficulty, LetterPool, Profile } from '../storage/schema'
 import type { Level, ModeId, SessionItem } from '../modes/types'
 import { MODES, MODE_LIST } from '../modes/registry'
 import type { GlyphCase, SkillId } from './skills'
@@ -27,9 +27,10 @@ export interface BuildOptions {
   readonly length?: number
   /** Restrict to these modes (free play). Empty means the mixed adventure. */
   readonly modeIds?: readonly ModeId[]
-  readonly level?: Level
   readonly micAvailable: boolean
-  readonly lowercaseEnabled: boolean
+  readonly caseMode: CaseMode
+  readonly letterPool: LetterPool
+  readonly difficulty: Difficulty
 }
 
 export interface SessionPlan {
@@ -47,6 +48,8 @@ interface Candidate {
   readonly glyphCase: GlyphCase
   readonly p: number
   readonly bucket: Bucket
+  /** Mean half-life in days, used to pick a level in automatic difficulty. */
+  readonly stability: number
 }
 
 function cellRecall(
@@ -60,20 +63,36 @@ function cellRecall(
   return recall(cell, now)
 }
 
-/** Targets the weaker of the two cases, which is where the gap usually is. */
-function weakerCase(
+/**
+ * Which shape of the letter to show.
+ *
+ * In mixed mode the weaker of the two is targeted, because that is where the
+ * gap is. A lowercase cell that has never been touched counts as the biggest
+ * gap of all, so lowercase gets real coverage instead of being crowded out by
+ * the capital the child already knows. Only the very first exposure to a
+ * letter is forced to the capital.
+ */
+function chooseCase(
   profile: Profile,
   letter: LetterId,
   skill: SkillId,
   now: number,
-  lowercaseEnabled: boolean,
+  caseMode: CaseMode,
 ): GlyphCase {
-  if (!SKILLS[skill].caseSensitive || !lowercaseEnabled) return 'upper'
-  const upper = cellRecall(profile, letter, skill, 'upper', now)
-  const lower = cellRecall(profile, letter, skill, 'lower', now)
-  // Lowercase only starts appearing once uppercase has some footing.
-  if (upper < 0.35) return 'upper'
-  return lower <= upper ? 'lower' : 'upper'
+  if (!SKILLS[skill].caseSensitive) return 'upper'
+  if (caseMode === 'upper') return 'upper'
+  if (caseMode === 'lower') return 'lower'
+
+  const upperCell = profile.cells[cellKey(letter, skill, 'upper')] ?? NEW_CELL
+  const lowerCell = profile.cells[cellKey(letter, skill, 'lower')] ?? NEW_CELL
+
+  if (upperCell.n === 0 && lowerCell.n === 0) return 'upper'
+  if (upperCell.n === 0) return 'upper'
+  if (lowerCell.n === 0) {
+    const upperRecall = recall(upperCell, now)
+    return upperRecall >= 0.5 || upperCell.n >= 2 ? 'lower' : 'upper'
+  }
+  return recall(lowerCell, now) <= recall(upperCell, now) ? 'lower' : 'upper'
 }
 
 function bucketOf(p: number, attempted: boolean): Bucket {
@@ -98,14 +117,28 @@ function openLetters(profile: Profile, now: number): readonly LetterId[] {
   })
 }
 
-/** Decides whether a fresh letter joins the curriculum this session. */
+/**
+ * Decides which fresh letters join the curriculum this session.
+ *
+ * With a fixed pool the parent has said how many letters should be in play, so
+ * the set is filled straight away and the scheduler picks the weak ones out of
+ * it. That is the right shape for a child who already knows most of the
+ * alphabet and needs only a handful of stragglers.
+ */
 export function nextIntroductions(
   profile: Profile,
   now: number,
+  pool: LetterPool,
 ): readonly LetterId[] {
   const known = new Set(profile.introduced)
   const remaining = INTRO_ORDER.filter((letter) => !known.has(letter))
   if (remaining.length === 0) return []
+
+  if (pool !== 'auto') {
+    const target = Math.min(LETTER_IDS.length, Math.max(3, pool))
+    const missing = target - profile.introduced.length
+    return missing > 0 ? remaining.slice(0, missing) : []
+  }
 
   // Cold start: three letters, so a choice screen has something to choose from.
   if (profile.introduced.length === 0) return remaining.slice(0, 3)
@@ -134,10 +167,10 @@ function modeForLetter(
   letter: LetterId,
   modeIds: readonly ModeId[],
   now: number,
-  lowercaseEnabled: boolean,
+  caseMode: CaseMode,
   bucket: Bucket,
   used: Map<ModeId, number>,
-  cap: number,
+  length: number,
 ): ModeId {
   // A letter the child has never seen is introduced by recognising it, never
   // by being asked to say or write it. Meeting a glyph for the first time in a
@@ -154,16 +187,29 @@ function modeForLetter(
     if (first) return first
   }
 
+  // A child who already recognises a letter has an untouched writing channel,
+  // so weakest-first would hand out nothing but tracing and typing. Production
+  // as a whole is capped, on top of each mode's own share.
+  const demandingUsed = DEMANDING.reduce((sum, id) => sum + (used.get(id) ?? 0), 0)
+  const demandingCap = Math.max(2, Math.round(length * TUNING.demandingShareCap))
+
   const scored = pool.map((id) => {
     const mode = MODES[id]
-    const glyphCase = weakerCase(profile, letter, mode.skill, now, lowercaseEnabled)
+    const glyphCase = chooseCase(profile, letter, mode.skill, now, caseMode)
     const p = cellRecall(profile, letter, mode.skill, glyphCase, now)
-    // Core skills first, then whichever channel is weakest. A mode already used
-    // its share of the round is pushed back, so no round turns into fourteen
-    // tracing exercises in a row.
+    // Core skills first, then whichever channel is weakest. A mode that has
+    // used up its share of the round is pushed to the back of the queue.
     const corePriority = CORE_SKILLS.includes(mode.skill) ? 0 : 0.25
-    const overuse = Math.max(0, (used.get(id) ?? 0) - cap + 1) * 0.5
-    return { id, score: p + corePriority + overuse + Math.random() * 0.12 }
+    const cap = Math.max(1, Math.round(length * mode.maxShare))
+    // Recall sits in 0..1, so a penalty above 1 is what makes a quota bind at
+    // all: below that the untouched writing channel always wins on weakness.
+    const overuse = Math.max(0, (used.get(id) ?? 0) - cap + 1) * 1.2
+    const demandingPenalty =
+      DEMANDING.includes(id) && demandingUsed >= demandingCap ? 1.4 : 0
+    return {
+      id,
+      score: p + corePriority + overuse + demandingPenalty + Math.random() * 0.12,
+    }
   })
   scored.sort((a, b) => a.score - b.score)
   const chosen = scored[0]?.id ?? pool[0]
@@ -178,7 +224,7 @@ function buildCandidates(
   now: number,
   options: BuildOptions,
   used: Map<ModeId, number>,
-  cap: number,
+  length: number,
 ): readonly Candidate[] {
   return letters.map((letter) => {
     // The bucket describes the letter, not one exercise: it decides what kind
@@ -200,14 +246,22 @@ function buildCandidates(
       letter,
       modeIds,
       now,
-      options.lowercaseEnabled,
+      options.caseMode,
       bucket,
       used,
-      cap,
+      length,
     )
     const mode = MODES[modeId]
-    const glyphCase = weakerCase(profile, letter, mode.skill, now, options.lowercaseEnabled)
-    return { letter, modeId, skill: mode.skill, glyphCase, p: letterP, bucket }
+    const glyphCase = chooseCase(profile, letter, mode.skill, now, options.caseMode)
+    return {
+      letter,
+      modeId,
+      skill: mode.skill,
+      glyphCase,
+      p: letterP,
+      bucket,
+      stability: letterStability(profile, letter),
+    }
   })
 }
 
@@ -337,7 +391,18 @@ function arrange(picked: readonly Candidate[]): readonly Candidate[] {
   const rest = shuffle(picked.filter((c) => c.bucket !== 'easy'))
   const opening = easy.slice(0, Math.min(2, easy.length))
   const closing = easy.slice(opening.length, opening.length + 1)
-  const middle = shuffle([...rest, ...easy.slice(opening.length + closing.length)])
+  const spare = shuffle(easy.slice(opening.length + closing.length))
+
+  // Interleave rather than shuffle together: five unfamiliar letters in a row
+  // is how a child decides they are bad at this. Every hard item gets an easy
+  // one after it whenever there is one left.
+  const middle: Candidate[] = []
+  let hard = 0
+  let soft = 0
+  while (hard < rest.length || soft < spare.length) {
+    if (hard < rest.length) middle.push(rest[hard++])
+    if (soft < spare.length) middle.push(spare[soft++])
+  }
 
   const ordered = [...opening, ...middle, ...closing]
 
@@ -367,9 +432,8 @@ export function buildSession(
   options: BuildOptions,
 ): SessionPlan {
   const modeIds = availableModes(options)
-  const fresh = nextIntroductions(profile, now)
+  const fresh = nextIntroductions(profile, now, options.letterPool)
   const letters = [...profile.introduced, ...fresh]
-  const level: Level = options.level ?? 1
   // Early on there are only a handful of letters. A full-length round would
   // just ask about the same three over and over.
   const length = Math.max(
@@ -381,10 +445,21 @@ export function buildSession(
     return { items: [], introduced: [] }
   }
 
-  // No single exercise may take more than a quarter of the round.
-  const modeCap = Math.max(2, Math.ceil(length / 4))
+  // Each exercise has its own ceiling, declared in the mode registry.
   const modeUsage = new Map<ModeId, number>()
-  const candidates = buildCandidates(profile, letters, modeIds, now, options, modeUsage, modeCap)
+  // Mode quotas are scaled to the number of candidates, not to the round
+  // length: one candidate is built per letter, and the round is drawn from
+  // them, so a quota counted in items would be exhausted long before the last
+  // letter got a say.
+  const candidates = buildCandidates(
+    profile,
+    letters,
+    modeIds,
+    now,
+    options,
+    modeUsage,
+    letters.length,
+  )
   const masteredRatio =
     profile.introduced.filter(
       (letter) => letterStatus(profile, letter, now).stage === 'mastered',
@@ -399,21 +474,40 @@ export function buildSession(
     ...takeFrom(pool, 'easy', counts.easy),
   ]
 
-  // Short curricula run out of distinct letters: repeat the weakest ones.
+  // When there is nothing weak to review, the nominal weak and review slots go
+  // begging and the round would fill up with easy wins. That is precisely the
+  // situation of a child who already knows most of the alphabet: the letters
+  // they are missing are all "new", and those are what the round is for. Hand
+  // the spare slots to them, up to half the round.
+  const newCap = Math.round(length * TUNING.mix.newShareCap)
+  const alreadyNew = picked.filter((c) => c.bucket === 'new').length
+  if (picked.length < length && alreadyNew < newCap) {
+    picked.push(...takeFrom(pool, 'new', Math.min(newCap - alreadyNew, length - picked.length)))
+  }
+
+  // Padding. Brand-new letters are excluded here: beyond the cap above, a
+  // round of first encounters teaches nothing. The rest is material the child
+  // has already met, weakest first.
+  // Draw from what is left in the pool before repeating anything already
+  // picked, otherwise the same three letters come back all round and drag
+  // their exercise with them.
+  const unused = pool.filter((c) => c.bucket !== 'new').sort((a, b) => a.p - b.p)
+  const repeats = picked.filter((c) => c.bucket !== 'new')
+  const fillPool = [
+    ...unused,
+    ...(repeats.length > 0 ? repeats : candidates.filter((c) => c.bucket !== 'new')),
+  ]
   let guard = 0
-  while (picked.length < length && guard < length * 4) {
+  while (picked.length < length && fillPool.length > 0 && guard < length * 4) {
+    picked.push(fillPool[guard % fillPool.length])
     guard += 1
-    const sorted = [...candidates].sort((a, b) => a.p - b.p)
-    const next = sorted[picked.length % sorted.length]
-    if (next) picked.push(next)
-    else break
   }
 
   const arranged = arrange(picked.slice(0, length))
 
   const items = arranged.map((candidate, index): SessionItem => {
     const mode = MODES[candidate.modeId]
-    const itemLevel = pickLevel(candidate, level)
+    const itemLevel = pickLevel(candidate, options.difficulty)
     const optionCount = mode.options(itemLevel)
     const distractorCount =
       candidate.modeId === 'typeIt' || candidate.modeId === 'sayIt' || candidate.modeId === 'traceIt'
@@ -441,9 +535,24 @@ export function buildSession(
   return { items, introduced: fresh }
 }
 
-/** A brand-new letter always starts at the easiest level, whatever is asked. */
-function pickLevel(candidate: Candidate, requested: Level): Level {
+/**
+ * Level for one question.
+ *
+ * On automatic difficulty each letter gets the level it has earned: a shaky
+ * letter is asked among three tiles, a settled one among six. A fixed level
+ * still steps down for a brand-new letter, because a first encounter among six
+ * distractors is just a guaranteed failure.
+ */
+function pickLevel(candidate: Candidate, difficulty: Difficulty): Level {
   if (candidate.bucket === 'new') return 1
-  if (candidate.bucket === 'weak' && requested === 3) return 2
-  return requested
+
+  if (difficulty === 'auto') {
+    if (candidate.bucket === 'weak') return 1
+    if (candidate.stability >= TUNING.solidHalfLifeDays) return 3
+    if (candidate.stability >= TUNING.settledHalfLifeDays) return 2
+    return 1
+  }
+
+  if (candidate.bucket === 'weak' && difficulty === 3) return 2
+  return difficulty
 }

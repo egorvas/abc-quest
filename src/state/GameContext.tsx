@@ -18,7 +18,13 @@ import {
   upsertProfile,
 } from '../storage/store'
 import type { Attempt } from '../modes/types'
-import { applyAttempt, finishRound, introduceLetters, type RoundResult } from '../engine/apply'
+import {
+  applyAttempt,
+  finishRound,
+  introduceLetters,
+  placeKnownLetters,
+  type RoundResult,
+} from '../engine/apply'
 import type { LetterId } from '../data/letters'
 import { setMuted } from '../audio/sfx'
 
@@ -32,6 +38,8 @@ interface GameValue {
   readonly updateSettings: (patch: Partial<Settings>) => void
   readonly recordAttempt: (attempt: Attempt) => void
   readonly introduce: (letters: readonly LetterId[]) => void
+  /** Answer to "which letters does the child already know". */
+  readonly placeKnown: (letters: readonly LetterId[]) => void
   readonly closeRound: (result: RoundResult) => void
   readonly importStore: (store: Store) => void
 }
@@ -93,7 +101,7 @@ export function GameProvider({ children }: { readonly children: ReactNode }) {
       saveFailed,
       createProfile: (name, avatar) => {
         setStore((current) => {
-          const created = newProfile(name.trim() || 'Игрок', avatar, Date.now())
+          const created = newProfile(name.trim() || 'Player', avatar, Date.now())
           return { ...upsertProfile(current, created), activeId: created.id }
         })
       },
@@ -108,6 +116,8 @@ export function GameProvider({ children }: { readonly children: ReactNode }) {
         patchProfile((current) => applyAttempt(current, attempt, Date.now())),
       introduce: (letters) =>
         patchProfile((current) => introduceLetters(current, letters)),
+      placeKnown: (letters) =>
+        patchProfile((current) => placeKnownLetters(current, letters, Date.now())),
       closeRound: (result) =>
         patchProfile((current) => finishRound(current, result, Date.now())),
       importStore: (next) => setStore(next),

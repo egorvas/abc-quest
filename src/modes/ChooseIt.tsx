@@ -72,10 +72,10 @@ export function ChooseIt({ item, onDone, seq }: ModeProps) {
       <div className={`choose__glyph ${locked ? 'choose__glyph--won' : ''}`}>{glyph}</div>
       <p className="mode__hint">
         {tracker.revealed
-          ? 'Нажми на светящийся динамик'
+          ? 'Tap the glowing speaker'
           : armed
-            ? 'Нажми ещё раз, если это она'
-            : 'Послушай и выбери'}
+            ? 'Tap again if that is the one'
+            : 'Listen and choose'}
       </p>
       <div className="choose__row">
         {options.map((option) => {
@@ -95,7 +95,7 @@ export function ChooseIt({ item, onDone, seq }: ModeProps) {
                 .join(' ')}
               onClick={() => handleTap(option)}
               disabled={locked || isDead}
-              aria-label={`Вариант ${letterInfo(option).name}`}
+              aria-label={`Option ${letterInfo(option).name}`}
             >
               {armed === option ? '✓' : '🔊'}
             </button>

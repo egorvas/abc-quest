@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useGame } from '../state/GameContext'
 import { buildSession } from '../engine/scheduler'
-import type { Attempt, Level, ModeId, SessionItem } from '../modes/types'
+import type { Attempt, ModeId, SessionItem } from '../modes/types'
 import { speechRecognitionSupported } from '../speech/recognizer'
 import { HearPick } from '../modes/HearPick'
 import { ChooseIt } from '../modes/ChooseIt'
@@ -35,7 +35,6 @@ const RENDERERS = {
 interface SessionScreenProps {
   /** Empty means the mixed adventure across all modes. */
   readonly modeIds?: readonly ModeId[]
-  readonly level?: Level
   readonly onExit: () => void
 }
 
@@ -46,7 +45,7 @@ interface SessionScreenProps {
  * on what actually happens: a mistake is always followed by something the
  * child can do, and the round never ends on a failure.
  */
-export function SessionScreen({ modeIds, level = 1, onExit }: SessionScreenProps) {
+export function SessionScreen({ modeIds, onExit }: SessionScreenProps) {
   const { profile, recordAttempt, introduce, closeRound } = useGame()
   const [queue, setQueue] = useState<readonly SessionItem[]>([])
   const [index, setIndex] = useState(0)
@@ -60,9 +59,10 @@ export function SessionScreen({ modeIds, level = 1, onExit }: SessionScreenProps
     if (!profile) return
     const plan = buildSession(profile, Date.now(), {
       modeIds,
-      level,
       micAvailable: profile.settings.micEnabled && speechRecognitionSupported(),
-      lowercaseEnabled: profile.settings.lowercaseEnabled,
+      caseMode: profile.settings.caseMode,
+      letterPool: profile.settings.letterPool,
+      difficulty: profile.settings.difficulty,
       length: TUNING.sessionLength,
     })
     setQueue(plan.items)
@@ -156,22 +156,22 @@ export function SessionScreen({ modeIds, level = 1, onExit }: SessionScreenProps
       <Screen className="session session--done">
         <div className="done">
           <div className="done__badge">🌟</div>
-          <h1 className="done__title">Молодец!</h1>
+          <h1 className="done__title">Well done!</h1>
           <p className="done__line">
-            Правильно: {stats.current.correct} из {queue.length}
+            Right first time: {stats.current.correct} of {queue.length}
           </p>
           <div className="done__seeds">
             {Array.from({ length: seeds }, (_, i) => (
               <span key={i} className="done__seed">🌰</span>
             ))}
           </div>
-          <p className="done__hint">Семена отправились в сад</p>
+          <p className="done__hint">Your seeds went to the garden</p>
           <div className="done__actions">
             <Button onPress={startRound} size="lg" tone="primary">
-              ▶︎ Ещё раз
+              ▶︎ Again
             </Button>
             <Button onPress={onExit} size="lg" tone="mint">
-              В сад 🌱
+              Garden 🌱
             </Button>
           </div>
         </div>
@@ -184,7 +184,7 @@ export function SessionScreen({ modeIds, level = 1, onExit }: SessionScreenProps
       <Screen className="session">
         <TopBar left={<Button size="sm" tone="ghost" onPress={onExit}>🏠</Button>} />
         <div className="session__empty">
-          <p>Готовим задания...</p>
+          <p>Getting things ready...</p>
         </div>
       </Screen>
     )
@@ -194,7 +194,7 @@ export function SessionScreen({ modeIds, level = 1, onExit }: SessionScreenProps
     <Screen className="session">
       <TopBar
         left={
-          <Button size="sm" tone="ghost" onPress={onExit} ariaLabel="Домой">
+          <Button size="sm" tone="ghost" onPress={onExit} ariaLabel="Home">
             🏠
           </Button>
         }

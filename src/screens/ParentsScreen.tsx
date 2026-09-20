@@ -14,6 +14,7 @@ import './ParentsScreen.css'
 
 interface ParentsScreenProps {
   readonly onBack: () => void
+  readonly onEditKnown: () => void
 }
 
 /**
@@ -23,7 +24,7 @@ interface ParentsScreenProps {
  * Everything shown here is derived from the records the engine already keeps;
  * nothing extra is stored to produce it.
  */
-export function ParentsScreen({ onBack }: ParentsScreenProps) {
+export function ParentsScreen({ onBack, onEditKnown }: ParentsScreenProps) {
   const { profile, store, updateSettings, importStore, saveFailed } = useGame()
   const [unlocked, setUnlocked] = useState(false)
   const [answer, setAnswer] = useState('')
@@ -49,12 +50,12 @@ export function ParentsScreen({ onBack }: ParentsScreenProps) {
         <TopBar
           left={
             <Button size="sm" tone="ghost" onPress={onBack}>
-              ← Назад
+              ← Back
             </Button>
           }
         />
         <div className="parents__gate">
-          <p className="parents__gate-title">Для родителей</p>
+          <p className="parents__gate-title">For grown-ups</p>
           <p className="parents__gate-sum">
             {gate.a} + {gate.b} = ?
           </p>
@@ -74,6 +75,12 @@ export function ParentsScreen({ onBack }: ParentsScreenProps) {
   }
 
   const learned = masteredCount(statuses)
+  const inPlay = profile.introduced.length
+  const familiar = statuses.filter(
+    (s) => s.stage === 'strong' || s.stage === 'mastered',
+  ).length
+  const poolValue =
+    profile.settings.letterPool === 'auto' ? 'auto' : String(profile.settings.letterPool)
   const weakest = [...statuses]
     .filter((s) => s.stage !== 'locked' && s.stage !== 'mastered')
     .sort((a, b) => a.recall - b.recall)
@@ -93,7 +100,7 @@ export function ParentsScreen({ onBack }: ParentsScreenProps) {
     }).filter((value): value is number => value !== null)
     return {
       skill,
-      label: SKILLS[skill].labelRu,
+      label: SKILLS[skill].label,
       average: values.length === 0 ? 0 : values.reduce((a, b) => a + b, 0) / values.length,
       touched: values.length,
     }
@@ -116,13 +123,13 @@ export function ParentsScreen({ onBack }: ParentsScreenProps) {
         const parsed: unknown = JSON.parse(String(reader.result))
         const next = migrate(parsed)
         if (next.profiles.length === 0) {
-          window.alert('В файле нет профилей')
+          window.alert('No profiles in that file')
           return
         }
         importStore(next)
-        window.alert(`Загружено профилей: ${next.profiles.length}`)
+        window.alert(`Loaded ${next.profiles.length} profile(s)`)
       } catch {
-        window.alert('Не удалось прочитать файл')
+        window.alert('Could not read that file')
       }
     }
     reader.readAsText(file)
@@ -133,7 +140,7 @@ export function ParentsScreen({ onBack }: ParentsScreenProps) {
       <TopBar
         left={
           <Button size="sm" tone="ghost" onPress={onBack}>
-            ← Назад
+            ← Back
           </Button>
         }
         center={<span className="parents__title">{profile.name}</span>}
@@ -141,35 +148,35 @@ export function ParentsScreen({ onBack }: ParentsScreenProps) {
 
       <div className="parents__body">
         <section className="pcard">
-          <h2 className="pcard__h">Прогресс</h2>
+          <h2 className="pcard__h">Progress</h2>
           <div className="pcard__row">
             <div className="pstat">
               <b>{learned}</b>
-              <span>букв освоено</span>
+              <span>letters mastered</span>
             </div>
             <div className="pstat">
               <b>{profile.introduced.length}</b>
-              <span>букв введено</span>
+              <span>letters in play</span>
             </div>
             <div className="pstat">
               <b>{profile.stones}</b>
-              <span>дней с игрой</span>
+              <span>days played</span>
             </div>
             <div className="pstat">
               <b>{Math.round(totalSeconds / 60)}</b>
-              <span>минут всего</span>
+              <span>minutes total</span>
             </div>
             <div className="pstat">
               <b>{totalItems === 0 ? '—' : `${Math.round((totalCorrect / totalItems) * 100)}%`}</b>
-              <span>верных ответов</span>
+              <span>right first time</span>
             </div>
           </div>
         </section>
 
         <section className="pcard">
-          <h2 className="pcard__h">Самые слабые буквы</h2>
+          <h2 className="pcard__h">Weakest letters</h2>
           {weakest.length === 0 ? (
-            <p className="pcard__muted">Пока нет данных — сыграйте первый раунд.</p>
+            <p className="pcard__muted">Nothing yet. Play a first round.</p>
           ) : (
             <div className="pweak">
               {weakest.map((status) => (
@@ -189,7 +196,7 @@ export function ParentsScreen({ onBack }: ParentsScreenProps) {
         </section>
 
         <section className="pcard">
-          <h2 className="pcard__h">По навыкам</h2>
+          <h2 className="pcard__h">By skill</h2>
           <div className="pskills">
             {perSkill.map((row) => (
               <div key={row.skill} className="pskill">
@@ -205,52 +212,125 @@ export function ParentsScreen({ onBack }: ParentsScreenProps) {
             ))}
           </div>
           <p className="pcard__muted">
-            Узнавание растёт быстро и осыпается так же быстро. «Называет» и «Пишет» — то,
-            что действительно держится.
+            Recognition grows fast and fades just as fast. Naming and writing are
+            the ones that actually stick.
           </p>
         </section>
 
         <section className="pcard">
-          <h2 className="pcard__h">Настройки</h2>
+          <h2 className="pcard__h">What is known already</h2>
+          <p className="pcard__muted">
+            {inPlay} of 26 letters are in play, {familiar} of them familiar. Tick the
+            ones the child already recognises: those become easy wins and the rounds
+            go to the rest.
+          </p>
+          <div className="pcard__actions">
+            <Button onPress={onEditKnown} tone="amber" size="sm">
+              ✎ Tick the known letters
+            </Button>
+          </div>
+        </section>
+
+        <section className="pcard">
+          <h2 className="pcard__h">How many letters at once</h2>
+          <Choice
+            value={poolValue}
+            options={[
+              { value: 'auto', label: 'One by one', note: 'a new letter once the last ones settle' },
+              { value: '8', label: '8' },
+              { value: '16', label: '16' },
+              { value: '26', label: 'All 26' },
+            ]}
+            onChange={(value) =>
+              updateSettings({ letterPool: value === 'auto' ? 'auto' : Number(value) })
+            }
+          />
+          <p className="pcard__muted">
+            One by one is for starting from nothing. A fixed set keeps that many
+            letters active at once and the engine picks the weakest out of them,
+            which is what a child who knows almost everything needs.
+          </p>
+        </section>
+
+        <section className="pcard">
+          <h2 className="pcard__h">Upper and lower case</h2>
+          <Choice
+            value={profile.settings.caseMode}
+            options={[
+              { value: 'mixed', label: 'Both' },
+              { value: 'upper', label: 'A B C only' },
+              { value: 'lower', label: 'a b c only' },
+            ]}
+            onChange={(value) =>
+              updateSettings({ caseMode: value as typeof profile.settings.caseMode })
+            }
+          />
+          <p className="pcard__muted">
+            In the mixed mode upper and lower case are two separate memory cells and
+            the weaker one gets asked. A letter seen for the very first time always
+            starts as a capital.
+          </p>
+        </section>
+
+        <section className="pcard">
+          <h2 className="pcard__h">Difficulty</h2>
+          <Choice
+            value={String(profile.settings.difficulty)}
+            options={[
+              { value: 'auto', label: 'Automatic', note: 'per letter, as it is earned' },
+              { value: '1', label: 'Easy', note: '3 options' },
+              { value: '2', label: 'Medium', note: '4 options' },
+              { value: '3', label: 'Hard', note: '6 options' },
+            ]}
+            onChange={(value) =>
+              updateSettings({
+                difficulty: value === 'auto' ? 'auto' : (Number(value) as 1 | 2 | 3),
+              })
+            }
+          />
+          <p className="pcard__muted">
+            Difficulty changes how many options are on screen, the size of the hunt
+            field, the number of pairs to match and the keyboard layout. A brand-new
+            letter is always shown at the easiest level whatever is set here.
+          </p>
+        </section>
+
+        <section className="pcard">
+          <h2 className="pcard__h">Other</h2>
           <Toggle
-            label="Микрофон (режим «Скажи букву»)"
+            label="Microphone (the Say the letter game)"
             value={profile.settings.micEnabled}
             onChange={(micEnabled) => updateSettings({ micEnabled })}
-            note={speechRecognitionSupported() ? undefined : 'Браузер не поддерживает распознавание'}
+            note={speechRecognitionSupported() ? undefined : 'This browser cannot recognise speech'}
           />
           <Toggle
-            label="Звук"
+            label="Sound"
             value={profile.settings.soundEnabled}
             onChange={(soundEnabled) => updateSettings({ soundEnabled })}
-            note={ttsSupported() ? undefined : 'Браузер не умеет произносить буквы'}
+            note={ttsSupported() ? undefined : 'This browser cannot speak the letters'}
           />
           <Toggle
-            label="Строчные буквы"
-            value={profile.settings.lowercaseEnabled}
-            onChange={(lowercaseEnabled) => updateSettings({ lowercaseEnabled })}
-          />
-          <Toggle
-            label="Клавиатура QWERTY вместо ABC"
+            label="QWERTY keyboard instead of ABC"
             value={profile.settings.keyboardLayout === 'qwerty'}
             onChange={(on) => updateSettings({ keyboardLayout: on ? 'qwerty' : 'abc' })}
           />
         </section>
 
         <section className="pcard">
-          <h2 className="pcard__h">Данные</h2>
+          <h2 className="pcard__h">Data</h2>
           <p className="pcard__muted">
-            Прогресс хранится только в этом браузере ({Math.round(storeSizeBytes(store) / 1024)} КБ).
+            Progress lives only in this browser ({Math.round(storeSizeBytes(store) / 1024)} KB).
             {storageIsPersistent()
-              ? ' Safari на iPad может стереть данные сайта примерно через неделю без открытия — добавьте страницу на домашний экран и делайте резервную копию.'
-              : ' Хранилище недоступно: прогресс не сохранится после закрытия вкладки.'}
-            {saveFailed ? ' Последнее сохранение не удалось.' : ''}
+              ? ' Safari on iPad may erase site data after about a week without opening it. Add the page to the home screen and keep a backup.'
+              : ' Storage is unavailable: progress will not survive closing this tab.'}
+            {saveFailed ? ' The last save failed.' : ''}
           </p>
           <div className="pcard__actions">
             <Button onPress={exportProfile} tone="ghost" size="sm">
-              ⬇ Сохранить копию
+              ⬇ Save a copy
             </Button>
             <Button onPress={() => fileRef.current?.click()} tone="ghost" size="sm">
-              ⬆ Загрузить копию
+              ⬆ Load a copy
             </Button>
           </div>
           <input
@@ -267,6 +347,39 @@ export function ParentsScreen({ onBack }: ParentsScreenProps) {
         </section>
       </div>
     </Screen>
+  )
+}
+
+interface ChoiceOption {
+  readonly value: string
+  readonly label: string
+  readonly note?: string
+}
+
+interface ChoiceProps {
+  readonly value: string
+  readonly options: readonly ChoiceOption[]
+  readonly onChange: (value: string) => void
+}
+
+/** A row of mutually exclusive buttons, easier to read than a select on iPad. */
+function Choice({ value, options, onChange }: ChoiceProps) {
+  return (
+    <div className="pchoice" role="radiogroup">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          role="radio"
+          aria-checked={value === option.value}
+          className={`pchoice__btn ${value === option.value ? 'pchoice__btn--on' : ''}`}
+          onClick={() => onChange(option.value)}
+        >
+          <span className="pchoice__label">{option.label}</span>
+          {option.note ? <span className="pchoice__note">{option.note}</span> : null}
+        </button>
+      ))}
+    </div>
   )
 }
 

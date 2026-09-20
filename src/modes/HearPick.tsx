@@ -102,7 +102,7 @@ export function HearPick({ item, onDone, seq }: ModeProps) {
         ))}
       </div>
       <p className="mode__hint">
-        {tracker.revealed ? 'Вот она! Нажми на светящуюся букву' : ''}
+        {tracker.revealed ? 'Here it is! Tap the glowing letter' : ''}
       </p>
     </div>
   )

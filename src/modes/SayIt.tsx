@@ -81,12 +81,12 @@ export function SayIt({ item, onDone, seq }: ModeProps) {
       if (outcome.kind === 'unsupported' || outcome.kind === 'denied') {
         setEchoMode(true)
         setMic('blocked')
-        setNote('Микрофон недоступен — скажем вместе')
+        setNote('No microphone here. Let us say it together')
         return
       }
       if (outcome.kind === 'silence' || outcome.kind === 'error') {
         setMic('idle')
-        setNote('Не расслышал. Попробуй ещё разок!')
+        setNote('I did not catch that. Try once more!')
         tracker.registerMiss(null)
         if (tracker.misses + 1 >= 2) setEchoMode(true)
         return
@@ -102,11 +102,11 @@ export function SayIt({ item, onDone, seq }: ModeProps) {
       if (verdict.kind === 'other') {
         sfx('wrong')
         setMic('idle')
-        setNote(`Услышал «${letterInfo(verdict.heard).name}». Попробуй ещё!`)
+        setNote(`I heard "${letterInfo(verdict.heard).name}". Try again!`)
         tracker.registerMiss(verdict.heard)
       } else {
         setMic('idle')
-        setNote('Не расслышал. Попробуй ещё разок!')
+        setNote('I did not catch that. Try once more!')
         tracker.registerMiss(null)
       }
       if (tracker.misses + 1 >= 2) setEchoMode(true)
@@ -127,9 +127,9 @@ export function SayIt({ item, onDone, seq }: ModeProps) {
 
       {echoMode ? (
         <div className="sayit__echo">
-          <p className="mode__hint">Скажи вместе со мной</p>
+          <p className="mode__hint">Say it with me</p>
           <Button onPress={echo} tone="mint" size="lg">
-            🔁 Повторяем: {info.name}
+            🔁 Repeat after me: {info.name}
           </Button>
         </div>
       ) : (

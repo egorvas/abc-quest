@@ -4,9 +4,9 @@ import type { Level, ModeId } from './types'
 
 export interface ModeMeta {
   readonly id: ModeId
-  readonly titleRu: string
+  readonly title: string
   readonly emoji: string
-  readonly blurbRu: string
+  readonly blurb: string
   readonly skill: SkillId
   readonly needsMic?: boolean
   /** Number of options shown on screen, target included. */
@@ -15,6 +15,14 @@ export interface ModeMeta {
   readonly gamma: (level: Level, options: number) => number
   /** Evidence weight of the channel at this level. */
   readonly weight: (level: Level) => number
+  /**
+   * Largest slice of one round this exercise may take.
+   *
+   * Tracing and speaking are the slowest and the most demanding, so they stay
+   * small: a round that opens with three tracing exercises in a row is how a
+   * child decides the game is boring, however useful the channel is.
+   */
+  readonly maxShare: number
   /** Included in the mixed adventure session. */
   readonly inAdventure: boolean
 }
@@ -24,97 +32,105 @@ const pick = (_level: Level, options: number) => 1 / Math.max(2, options)
 export const MODES: Readonly<Record<ModeId, ModeMeta>> = {
   hearPick: {
     id: 'hearPick',
-    titleRu: 'Послушай и найди',
+    title: 'Listen and find',
     emoji: '👂',
-    blurbRu: 'Слышишь букву — нажимаешь на неё',
+    blurb: 'Hear a letter, tap it',
     skill: 'spot',
     options: (level) => (level === 1 ? 3 : level === 2 ? 4 : 6),
     gamma: pick,
     weight: () => CHANNEL_WEIGHT.recognition,
+    maxShare: 0.3,
     inAdventure: true,
   },
   chooseIt: {
     id: 'chooseIt',
-    titleRu: 'Какая это буква?',
+    title: 'Which letter?',
     emoji: '🔊',
-    blurbRu: 'Видишь букву — выбираешь её имя',
+    blurb: 'See a letter, pick its name',
     skill: 'name',
     options: (level) => (level === 1 ? 2 : level === 2 ? 3 : 4),
     gamma: pick,
     weight: () => CHANNEL_WEIGHT.recognition,
+    maxShare: 0.3,
     inAdventure: true,
   },
   sayIt: {
     id: 'sayIt',
-    titleRu: 'Скажи букву',
+    title: 'Say the letter',
     emoji: '🎤',
-    blurbRu: 'Называешь букву вслух',
+    blurb: 'Say the letter out loud',
     skill: 'name',
     needsMic: true,
     options: () => 1,
     gamma: () => 0.02,
     weight: () => CHANNEL_WEIGHT.production,
+    maxShare: 0.15,
     inAdventure: true,
   },
   typeIt: {
     id: 'typeIt',
-    titleRu: 'Напечатай букву',
+    title: 'Type the letter',
     emoji: '⌨️',
-    blurbRu: 'Находишь букву на клавиатуре',
+    blurb: 'Find the letter on the keyboard',
     skill: 'prod',
     options: () => 26,
     gamma: () => 1 / 26,
     // Level 1 shows the letter, so it is copying, not recall.
     weight: (level) =>
       level === 1 ? CHANNEL_WEIGHT.recognition : CHANNEL_WEIGHT.recall,
+    maxShare: 0.2,
     inAdventure: true,
   },
   hunt: {
     id: 'hunt',
-    titleRu: 'Охота за буквой',
+    title: 'Letter hunt',
     emoji: '🔍',
-    blurbRu: 'Ищешь все такие буквы в поле',
+    blurb: 'Find every copy in the field',
     skill: 'spot',
     options: (level) => (level === 1 ? 12 : level === 2 ? 20 : 28),
     // Many tiles, several targets: luck is negligible but not zero.
     gamma: () => 0.08,
     // Finding the letter in unfamiliar shapes is the most valuable recognition.
     weight: () => CHANNEL_WEIGHT.recognition * 1.2,
+    maxShare: 0.25,
     inAdventure: true,
   },
   pairs: {
     id: 'pairs',
-    titleRu: 'Большая и маленькая',
+    title: 'Big and small',
     emoji: '🃏',
-    blurbRu: 'Собираешь пары A и a',
+    blurb: 'Match A with a',
     skill: 'case',
     options: (level) => (level === 1 ? 4 : level === 2 ? 5 : 6),
     gamma: () => 0.2,
     weight: () => CHANNEL_WEIGHT.recall,
+    maxShare: 0.25,
     inAdventure: true,
   },
   traceIt: {
     id: 'traceIt',
-    titleRu: 'Обведи букву',
+    title: 'Trace the letter',
     emoji: '✏️',
-    blurbRu: 'Пишешь букву пальцем',
+    blurb: 'Write the letter with a finger',
     skill: 'prod',
     options: () => 1,
     gamma: () => 0.05,
     // Levels 1-2 trace a visible outline: copying. Level 3 is from memory.
     weight: (level) =>
       level === 3 ? CHANNEL_WEIGHT.production : CHANNEL_WEIGHT.recognition,
+    maxShare: 0.15,
     inAdventure: true,
   },
   firstSound: {
     id: 'firstSound',
-    titleRu: 'A — Apple',
+    title: 'A is for Apple',
     emoji: '🍎',
-    blurbRu: 'С какой буквы начинается слово',
+    blurb: 'Which letter the word starts with',
     skill: 'sound',
     options: (level) => (level === 1 ? 2 : level === 2 ? 3 : 4),
     gamma: pick,
     weight: () => CHANNEL_WEIGHT.recognition * 1.2,
+    maxShare: 0.25,
     inAdventure: true,
   },
 }

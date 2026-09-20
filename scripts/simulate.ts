@@ -5,10 +5,20 @@
  * iPad: how fast letters are introduced, when the first gold stars appear, and
  * how big the saved profile gets.
  *
- *   npx tsx scripts/simulate.ts [days] [roundsPerDay] [accuracy]
+ *   npx tsx scripts/simulate.ts [days] [roundsPerDay] [accuracy] [knownAtStart] [pool]
+ *
+ * `knownAtStart` marks that many letters as already familiar, the way the
+ * "which letters do you already know" screen does, and `pool` is the letter
+ * pool setting ("auto" or a count). Together they reproduce the case that
+ * matters most: a child who knows twenty letters and needs six.
  */
 import { buildSession } from '../src/engine/scheduler'
-import { applyAttempt, finishRound, introduceLetters } from '../src/engine/apply'
+import {
+  applyAttempt,
+  finishRound,
+  introduceLetters,
+  placeKnownLetters,
+} from '../src/engine/apply'
 import { allStatuses, masteredCount } from '../src/engine/mastery'
 import { seedsForRound } from '../src/engine/garden'
 import { newProfile, type Profile } from '../src/storage/schema'
@@ -21,14 +31,38 @@ const days = Number(process.argv[2] ?? 21)
 const roundsPerDay = Number(process.argv[3] ?? 2)
 /** Probability the child answers a letter they actually know. */
 const skill = Number(process.argv[4] ?? 0.85)
+const knownAtStart = Number(process.argv[5] ?? 0)
+const poolArg = process.argv[6] ?? 'auto'
+const letterPool = poolArg === 'auto' ? ('auto' as const) : Number(poolArg)
 
 let profile: Profile = newProfile('Sim', '🤖', Date.now() - days * DAY_MS)
 let now = profile.createdAt
 
+/** How well the synthetic child knows each letter, 0..1. */
+const competence = new Map<string, number>()
+
+if (knownAtStart > 0) {
+  // The placement screen, as a parent would answer it: the easy letters first.
+  const known = ['O', 'S', 'A', 'M', 'T', 'I', 'C', 'E', 'K', 'B', 'D', 'P',
+    'R', 'N', 'L', 'F', 'H', 'G', 'J', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Q']
+    .slice(0, knownAtStart) as never
+  profile = placeKnownLetters(profile, known, now)
+  for (const letter of known as unknown as string[]) competence.set(letter, 0.8)
+}
+
+const totals = {
+  items: 0,
+  byCase: { upper: 0, lower: 0 } as Record<string, number>,
+  byMode: {} as Record<string, number>,
+  byLevel: {} as Record<number, number>,
+}
+
 function play(): void {
   const plan = buildSession(profile, now, {
     micAvailable: true,
-    lowercaseEnabled: true,
+    caseMode: 'mixed',
+    letterPool,
+    difficulty: 'auto',
   })
   if (plan.items.length === 0) return
   profile = introduceLetters(profile, plan.introduced)
@@ -36,12 +70,18 @@ function play(): void {
   let correct = 0
   let assisted = 0
   const letters = new Set<string>()
+  totals.items += plan.items.length
 
   for (const item of plan.items) {
+    totals.byCase[item.glyphCase] += 1
+    totals.byMode[item.modeId] = (totals.byMode[item.modeId] ?? 0) + 1
+    totals.byLevel[item.level] = (totals.byLevel[item.level] ?? 0) + 1
     const mode = MODES[item.modeId]
     const gamma = mode.gamma(item.level, mode.options(item.level))
-    // A familiar letter is answered well; an unfamiliar one falls back to luck.
-    const familiarity = item.reason === 'new' ? 0 : item.reason === 'weak' ? 0.45 : 0.9
+    // The synthetic child actually learns: competence in a letter grows each
+    // time it comes up. Without that the simulation would punish the scheduler
+    // for drilling exactly the letters it is supposed to drill.
+    const familiarity = competence.get(item.letter) ?? 0
     const chance = familiarity * skill + (1 - familiarity * skill) * gamma
     const roll = Math.random()
     const verdict: Verdict = roll < chance ? 'right' : roll < chance + 0.1 ? 'almost' : 'miss'
@@ -57,6 +97,11 @@ function play(): void {
       gamma,
       weight: mode.weight(item.level),
     }
+    // Seeing the answer teaches something even when the answer was wrong.
+    competence.set(
+      item.letter,
+      Math.min(1, familiarity + (verdict === 'right' ? 0.09 : 0.05)),
+    )
     profile = applyAttempt(profile, attempt, now)
     if (verdict === 'right') correct += 1
     if (wasAssisted) assisted += 1
@@ -106,3 +151,19 @@ console.log(
     `  profile size ${(bytes / 1024).toFixed(1)} KB`,
 )
 console.log(`introduction order used: ${profile.introduced.join(' ')}`)
+
+const share = (n: number) => `${Math.round((n / Math.max(1, totals.items)) * 100)}%`
+console.log(
+  `case split: ABC ${share(totals.byCase.upper)} / abc ${share(totals.byCase.lower)}`,
+)
+console.log(
+  'levels: ' +
+    [1, 2, 3].map((l) => `L${l} ${share(totals.byLevel[l] ?? 0)}`).join('  '),
+)
+console.log(
+  'modes: ' +
+    Object.entries(totals.byMode)
+      .sort((a, b) => b[1] - a[1])
+      .map(([id, n]) => `${id} ${share(n)}`)
+      .join('  '),
+)
