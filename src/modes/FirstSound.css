@@ -1,0 +1,41 @@
+.fsound {
+  gap: clamp(10px, 2vh, 22px);
+}
+
+.fsound__glyph {
+  font-family: var(--font-letter);
+  font-weight: 800;
+  font-size: min(24vh, 34vw);
+  line-height: 1;
+  text-shadow: 0 6px 0 rgba(0, 0, 0, 0.25);
+}
+
+.fsound__pic {
+  display: grid;
+  place-items: center;
+  width: clamp(96px, 17vh, 150px);
+  height: clamp(96px, 17vh, 150px);
+  border-radius: var(--r-md);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08));
+  border: 3px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.28);
+  transition: transform 0.12s ease, opacity 0.25s ease;
+}
+
+.fsound__pic:active:not(:disabled) {
+  transform: scale(0.93);
+}
+
+.fsound__pic--dead {
+  opacity: 0.25;
+}
+
+.fsound__pic--hint {
+  border-color: var(--amber);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.28), 0 0 0 6px rgba(251, 191, 36, 0.3);
+}
+
+.fsound__emoji {
+  font-size: clamp(50px, 9vh, 86px);
+  line-height: 1;
+}

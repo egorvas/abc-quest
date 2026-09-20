@@ -1,0 +1,8 @@
+.trace-mode {
+  gap: 10px;
+}
+
+.trace-mode .mode__prompt {
+  flex-direction: column;
+  gap: 6px;
+}

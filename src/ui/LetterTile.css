@@ -21,8 +21,8 @@
 }
 
 .tile--sm { width: 64px; font-size: 34px; }
-.tile--md { width: 104px; font-size: 58px; }
-.tile--lg { width: 150px; font-size: 88px; }
+.tile--md { width: clamp(104px, 15vh, 150px); font-size: clamp(58px, 8.5vh, 84px); }
+.tile--lg { width: clamp(150px, 22vh, 220px); font-size: clamp(88px, 13vh, 130px); }
 .tile--xl { width: min(46vh, 300px); font-size: min(30vh, 190px); border-radius: var(--r-lg); }
 
 .tile:not(.tile--static):active {

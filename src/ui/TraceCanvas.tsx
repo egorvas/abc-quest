@@ -14,6 +14,8 @@ interface TraceCanvasProps {
   /** Bumped by the parent to wipe the drawing. */
   readonly resetKey: number
   readonly disabled?: boolean
+  /** Level 3 fades the outline away so the child writes from memory. */
+  readonly showGhost?: boolean
 }
 
 const PEN_WIDTH = 34
@@ -25,7 +27,13 @@ const TOLERANCE = 22
  * into a hidden mask, and the child's strokes are scored against it. Works for
  * any glyph in any font, upper or lower case.
  */
-export function TraceCanvas({ glyph, onScore, resetKey, disabled = false }: TraceCanvasProps) {
+export function TraceCanvas({
+  glyph,
+  onScore,
+  resetKey,
+  disabled = false,
+  showGhost = true,
+}: TraceCanvasProps) {
   const hostRef = useRef<HTMLDivElement>(null)
   const inkRef = useRef<HTMLCanvasElement>(null)
   const maskRef = useRef<HTMLCanvasElement | null>(null)
@@ -181,7 +189,10 @@ export function TraceCanvas({ glyph, onScore, resetKey, disabled = false }: Trac
 
   return (
     <div className="trace" ref={hostRef}>
-      <div className="trace__ghost" aria-hidden="true">
+      <div
+        className={`trace__ghost ${showGhost ? '' : 'trace__ghost--hidden'}`}
+        aria-hidden="true"
+      >
         {glyph}
       </div>
       <canvas

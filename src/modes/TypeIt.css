@@ -1,0 +1,43 @@
+.type {
+  justify-content: space-between;
+  padding-top: 8px;
+}
+
+.type__slot {
+  display: grid;
+  place-items: center;
+  width: clamp(110px, 22vh, 170px);
+  height: clamp(110px, 22vh, 170px);
+  border-radius: var(--r-lg);
+  border: 5px dashed rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+  font-family: var(--font-letter);
+  font-weight: 800;
+  font-size: clamp(64px, 13vh, 110px);
+  line-height: 1;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.type__slot--ghost {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.type__slot--ok {
+  background: linear-gradient(160deg, #6ee7b7, var(--ok-deep));
+  border-style: solid;
+  border-color: #a7f3d0;
+  transform: scale(1.06);
+}
+
+.type__slot--no {
+  background: linear-gradient(160deg, #fda4af, var(--no-deep));
+  border-style: solid;
+  border-color: #fecdd3;
+  animation: type-shake 0.36s ease;
+}
+
+@keyframes type-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  60% { transform: translateX(8px); }
+}

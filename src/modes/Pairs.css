@@ -1,0 +1,47 @@
+.pairs {
+  justify-content: center;
+  gap: 14px;
+}
+
+.pairs__grid {
+  display: grid;
+  gap: clamp(8px, 1.6vw, 16px);
+  justify-content: center;
+}
+
+.pairs__grid--4 { grid-template-columns: repeat(4, auto); }
+.pairs__grid--5 { grid-template-columns: repeat(5, auto); }
+.pairs__grid--6 { grid-template-columns: repeat(4, auto); }
+
+@media (orientation: landscape) {
+  .pairs__grid--6 { grid-template-columns: repeat(6, auto); }
+}
+
+.pairs__card {
+  width: clamp(64px, 11.5vh, 118px);
+  aspect-ratio: 3 / 4;
+  border-radius: var(--r-md);
+  display: grid;
+  place-items: center;
+  background: linear-gradient(160deg, var(--violet), #5b21b6);
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.3);
+  font-family: var(--font-letter);
+  font-weight: 800;
+  font-size: clamp(30px, 6vh, 56px);
+  transition: transform 0.25s ease, background 0.25s ease, opacity 0.3s ease;
+}
+
+.pairs__card--open {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.12));
+  transform: rotateY(0deg) scale(1.04);
+}
+
+.pairs__card--matched {
+  background: linear-gradient(160deg, #6ee7b7, var(--ok-deep));
+  opacity: 0.85;
+}
+
+.pairs__face {
+  pointer-events: none;
+}

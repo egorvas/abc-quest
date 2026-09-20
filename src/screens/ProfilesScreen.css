@@ -1,0 +1,98 @@
+.profiles__title {
+  font-size: 22px;
+}
+
+.profiles__list,
+.profiles__form {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 0;
+  width: min(560px, 100%);
+  margin: 0 auto;
+}
+
+.profiles__card {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+}
+
+.profiles__pick {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  border-radius: var(--r-md);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.07));
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  min-height: var(--tap-min);
+}
+
+.profiles__card-avatar {
+  font-size: 38px;
+  line-height: 1;
+}
+
+.profiles__card-name {
+  flex: 1 1 auto;
+  text-align: left;
+  font-size: 21px;
+}
+
+.profiles__card-meta {
+  font-size: 16px;
+  color: var(--ink-faint);
+}
+
+.profiles__remove {
+  width: 54px;
+  border-radius: var(--r-md);
+  background: rgba(251, 113, 133, 0.18);
+  border: 2px solid rgba(251, 113, 133, 0.35);
+  font-size: 20px;
+}
+
+.profiles__avatars {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
+.profiles__avatar {
+  aspect-ratio: 1;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  border: 2px solid transparent;
+  font-size: 32px;
+}
+
+.profiles__avatar--on {
+  border-color: var(--amber);
+  background: var(--surface-strong);
+}
+
+.profiles__input {
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: 0 18px;
+  border-radius: var(--r-pill);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--ink);
+  font-weight: 800;
+  text-align: center;
+}
+
+.profiles__actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}

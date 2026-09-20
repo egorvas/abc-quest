@@ -1,0 +1,229 @@
+.parents__title {
+  font-size: 20px;
+}
+
+.parents__gate {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.parents__gate-title {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 18px;
+}
+
+.parents__gate-sum {
+  margin: 0;
+  font-family: var(--font-letter);
+  font-size: 56px;
+}
+
+.parents__gate-input {
+  width: 160px;
+  min-height: var(--tap-min);
+  border-radius: var(--r-pill);
+  border: 2px solid rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--ink);
+  text-align: center;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.parents__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 10px 0 24px;
+  width: min(760px, 100%);
+  margin: 0 auto;
+}
+
+.pcard {
+  background: rgba(255, 255, 255, 0.07);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--r-md);
+  padding: 16px 18px;
+}
+
+.pcard__h {
+  margin: 0 0 12px;
+  font-size: 15px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.pcard__muted {
+  margin: 12px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+.pcard__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 12px;
+}
+
+.pcard__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.pstat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pstat b {
+  font-family: var(--font-letter);
+  font-size: 34px;
+  line-height: 1;
+}
+
+.pstat span {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-faint);
+}
+
+.pweak {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.pweak__item,
+.pskill {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.pweak__glyph {
+  font-family: var(--font-letter);
+  font-weight: 800;
+  font-size: 26px;
+}
+
+.pweak__bar {
+  height: 14px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.pweak__fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--coral), var(--amber));
+}
+
+.pweak__fill--blue {
+  background: linear-gradient(90deg, var(--sky), var(--mint));
+}
+
+.pweak__word {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-faint);
+}
+
+.pskills {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.pskill {
+  grid-template-columns: 170px 1fr 36px;
+}
+
+.pskill__label {
+  font-size: 14px;
+}
+
+.pskill__n {
+  font-size: 12px;
+  color: var(--ink-faint);
+  text-align: right;
+}
+
+.ptoggle {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+  min-height: 54px;
+}
+
+.ptoggle__label {
+  flex: 1 1 auto;
+  font-size: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ptoggle__note {
+  font-size: 12px;
+  font-weight: 600;
+  font-style: normal;
+  color: var(--coral);
+}
+
+.ptoggle__input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ptoggle__switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 62px;
+  height: 34px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.16);
+  transition: background 0.2s ease;
+}
+
+.ptoggle__switch::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s ease;
+}
+
+.ptoggle__switch--on {
+  background: var(--ok-deep);
+}
+
+.ptoggle__switch--on::after {
+  transform: translateX(28px);
+}
+
+.parents__file {
+  display: none;
+}

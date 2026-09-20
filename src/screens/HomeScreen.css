@@ -1,0 +1,113 @@
+.home__who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 6px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+}
+
+.home__avatar {
+  font-size: 30px;
+  line-height: 1;
+}
+
+.home__name {
+  font-size: 17px;
+}
+
+.home__stats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.home__stat {
+  font-size: 17px;
+  padding: 8px 14px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  white-space: nowrap;
+}
+
+.home__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 10px 0 20px;
+}
+
+.home__title {
+  margin: 4px 0 0;
+  font-family: var(--font-letter);
+  font-size: clamp(42px, 9vh, 86px);
+  line-height: 1;
+  background: linear-gradient(120deg, #fde68a, var(--pink), var(--sky));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.home__cta {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.home__section {
+  margin: 8px 0 0;
+  color: var(--ink-faint);
+  font-size: 16px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.home__modes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  width: 100%;
+  max-width: 900px;
+}
+
+.home__mode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 12px;
+  border-radius: var(--r-md);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.07));
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.24);
+  min-height: 132px;
+  transition: transform 0.12s ease;
+}
+
+.home__mode:active {
+  transform: scale(0.95);
+}
+
+.home__mode-emoji {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.home__mode-title {
+  font-size: 17px;
+  text-align: center;
+}
+
+.home__mode-blurb {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  text-align: center;
+  line-height: 1.25;
+}
