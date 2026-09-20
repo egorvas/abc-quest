@@ -56,8 +56,7 @@ export function SessionScreen({ modeIds, level = 1, onExit }: SessionScreenProps
   const startedAt = useRef(Date.now())
   const [seeds, setSeeds] = useState(0)
 
-  // The plan is built once, from the profile as it was when the round started.
-  useEffect(() => {
+  const startRound = useCallback(() => {
     if (!profile) return
     const plan = buildSession(profile, Date.now(), {
       modeIds,
@@ -73,9 +72,14 @@ export function SessionScreen({ modeIds, level = 1, onExit }: SessionScreenProps
     stats.current = { correct: 0, assisted: 0, letters: new Set() }
     startedAt.current = Date.now()
     if (plan.introduced.length > 0) introduce(plan.introduced)
-    // Rebuilding mid-round would change the questions under the child's finger.
+    // The plan is a snapshot: rebuilding mid-round would change the questions
+    // under the child's finger.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    startRound()
+  }, [startRound])
 
   const finish = useCallback(() => {
     const total = queue.length
@@ -162,9 +166,14 @@ export function SessionScreen({ modeIds, level = 1, onExit }: SessionScreenProps
             ))}
           </div>
           <p className="done__hint">Семена отправились в сад</p>
-          <Button onPress={onExit} size="lg" tone="mint">
-            В сад 🌱
-          </Button>
+          <div className="done__actions">
+            <Button onPress={startRound} size="lg" tone="primary">
+              ▶︎ Ещё раз
+            </Button>
+            <Button onPress={onExit} size="lg" tone="mint">
+              В сад 🌱
+            </Button>
+          </div>
         </div>
       </Screen>
     )
@@ -192,7 +201,9 @@ export function SessionScreen({ modeIds, level = 1, onExit }: SessionScreenProps
         center={<SessionProgress marks={marks} />}
         right={<span className="session__count">{title}</span>}
       />
-      <Renderer item={item} onDone={handleAttempt} seq={index} />
+      {/* Keyed by position: every question gets a brand-new component, so no
+          mode has to remember to reset its own state between items. */}
+      <Renderer key={index} item={item} onDone={handleAttempt} seq={index} />
     </Screen>
   )
 }

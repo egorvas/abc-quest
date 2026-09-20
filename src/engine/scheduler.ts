@@ -116,6 +116,11 @@ function availableModes(options: BuildOptions): readonly ModeId[] {
  * Chooses which exercise to give a letter: the one that targets its weakest
  * core channel, among the modes currently available.
  */
+/** Exercises that ask the child to produce the letter rather than find it. */
+const DEMANDING: readonly ModeId[] = ['sayIt', 'typeIt', 'traceIt']
+/** The gentle ways to meet a letter for the first time. */
+const GENTLE: readonly ModeId[] = ['hearPick', 'chooseIt', 'firstSound']
+
 function modeForLetter(
   profile: Profile,
   letter: LetterId,
@@ -123,26 +128,39 @@ function modeForLetter(
   now: number,
   lowercaseEnabled: boolean,
   bucket: Bucket,
+  used: Map<ModeId, number>,
+  cap: number,
 ): ModeId {
   // A letter the child has never seen is introduced by recognising it, never
   // by being asked to say or write it. Meeting a glyph for the first time in a
-  // production exercise is just a guaranteed failure.
+  // production exercise is just a guaranteed failure. The same holds while the
+  // letter is still weak: production has to be earned.
+  const eligible =
+    bucket === 'new' || bucket === 'weak'
+      ? modeIds.filter((id) => !DEMANDING.includes(id))
+      : modeIds
+  const pool = eligible.length > 0 ? eligible : modeIds
+
   if (bucket === 'new') {
-    const gentle: readonly ModeId[] = ['hearPick', 'chooseIt', 'firstSound']
-    const first = gentle.find((id) => modeIds.includes(id))
+    const first = GENTLE.find((id) => pool.includes(id))
     if (first) return first
   }
 
-  const scored = modeIds.map((id) => {
+  const scored = pool.map((id) => {
     const mode = MODES[id]
     const glyphCase = weakerCase(profile, letter, mode.skill, now, lowercaseEnabled)
     const p = cellRecall(profile, letter, mode.skill, glyphCase, now)
-    // Core skills first, then whichever channel is weakest.
+    // Core skills first, then whichever channel is weakest. A mode already used
+    // its share of the round is pushed back, so no round turns into fourteen
+    // tracing exercises in a row.
     const corePriority = CORE_SKILLS.includes(mode.skill) ? 0 : 0.25
-    return { id, score: p + corePriority + Math.random() * 0.12 }
+    const overuse = Math.max(0, (used.get(id) ?? 0) - cap + 1) * 0.5
+    return { id, score: p + corePriority + overuse + Math.random() * 0.12 }
   })
   scored.sort((a, b) => a.score - b.score)
-  return scored[0]?.id ?? modeIds[0]
+  const chosen = scored[0]?.id ?? pool[0]
+  used.set(chosen, (used.get(chosen) ?? 0) + 1)
+  return chosen
 }
 
 function buildCandidates(
@@ -151,6 +169,8 @@ function buildCandidates(
   modeIds: readonly ModeId[],
   now: number,
   options: BuildOptions,
+  used: Map<ModeId, number>,
+  cap: number,
 ): readonly Candidate[] {
   return letters.map((letter) => {
     // The bucket describes the letter, not one exercise: it decides what kind
@@ -174,6 +194,8 @@ function buildCandidates(
       now,
       options.lowercaseEnabled,
       bucket,
+      used,
+      cap,
     )
     const mode = MODES[modeId]
     const glyphCase = weakerCase(profile, letter, mode.skill, now, options.lowercaseEnabled)
@@ -349,7 +371,10 @@ export function buildSession(
     return { items: [], introduced: [] }
   }
 
-  const candidates = buildCandidates(profile, letters, modeIds, now, options)
+  // No single exercise may take more than a quarter of the round.
+  const modeCap = Math.max(2, Math.ceil(length / 4))
+  const modeUsage = new Map<ModeId, number>()
+  const candidates = buildCandidates(profile, letters, modeIds, now, options, modeUsage, modeCap)
   const masteredRatio =
     profile.introduced.filter(
       (letter) => letterStatus(profile, letter, now).stage === 'mastered',

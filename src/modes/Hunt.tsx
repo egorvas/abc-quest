@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { LetterId } from '../data/letters'
 import { letterInfo } from '../data/letters'
 import { Speaker } from './Speaker'
+import { letterInSentence } from '../audio/speak'
 import { useAttempt } from './useAttempt'
 import type { ModeProps } from './types'
 import { shuffle } from '../engine/scheduler'
@@ -89,12 +90,6 @@ export function Hunt({ item, onDone, seq }: ModeProps) {
   )
   const totalTargets = field.filter((cell) => cell.isTarget).length
 
-  useEffect(() => {
-    setCaught([])
-    setFaded([])
-    setLocked(false)
-  }, [seq])
-
   const handleTap = (cell: Cell) => {
     if (locked || caught.includes(cell.key) || faded.includes(cell.key)) return
 
@@ -120,13 +115,12 @@ export function Hunt({ item, onDone, seq }: ModeProps) {
     }
   }
 
-  const info = letterInfo(item.letter)
 
   return (
     <div className="mode hunt">
       <div className="hunt__bar">
         <Speaker
-          text={`Find all the letter ${info.name}`}
+          text={`Find all ${letterInSentence(item.letter)}`}
           autoKey={seq}
           emoji="🔍"
           fallback={item.letter}

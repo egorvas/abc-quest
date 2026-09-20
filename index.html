@@ -2,18 +2,20 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover"
-    />
+    <!-- user-scalable and maximum-scale have been ignored since iOS 10; zoom is
+         controlled through touch-action in the stylesheet instead. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#2d1b69" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="ABC Quest" />
     <meta name="format-detection" content="telephone=no" />
     <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="apple-touch-icon" href="icon-192.png" />
+    <!-- Apple's zero-config lookup checks the origin root, not /abc-quest/,
+         so the icons have to be declared explicitly. -->
+    <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="icon-167.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

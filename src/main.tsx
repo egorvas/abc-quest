@@ -1,24 +1,24 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
+import { claimPlaybackSession } from './audio/session'
 import './styles/base.css'
 
-// Two-finger pinch and double-tap zoom make a touch game unplayable when a
-// child rests a palm on the screen. The viewport meta stops most of it; Safari
-// still needs these.
+// Must run before any AudioContext exists, or the ringer switch mutes the app.
+claimPlaybackSession()
+
+// Pinch zoom is disabled through `touch-action` in the stylesheet, but Safari's
+// own gesture events fire regardless, and a child resting a palm on the screen
+// triggers them constantly. These listeners must be non-passive: since iOS 11.3
+// touch and gesture listeners on window and document default to passive.
 document.addEventListener(
   'gesturestart',
   (event) => event.preventDefault(),
   { passive: false },
 )
-let lastTouch = 0
 document.addEventListener(
-  'touchend',
-  (event) => {
-    const now = Date.now()
-    if (now - lastTouch < 300) event.preventDefault()
-    lastTouch = now
-  },
+  'gesturechange',
+  (event) => event.preventDefault(),
   { passive: false },
 )
 

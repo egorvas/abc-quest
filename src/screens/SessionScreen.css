@@ -69,3 +69,10 @@
   0% { transform: translateY(-40px) scale(0.5); opacity: 0; }
   100% { transform: translateY(0) scale(1); opacity: 1; }
 }
+
+.done__actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}

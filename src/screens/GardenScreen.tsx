@@ -41,8 +41,8 @@ export function GardenScreen({ onBack }: GardenScreenProps) {
     const info = letterInfo(letter)
     playLetterNote(letter)
     const status = letterStatus(profile, letter, now)
-    if (status.stage === 'locked') void speakLetterName(info.name)
-    else void speak(`${info.name} for ${info.word}`)
+    if (status.stage === 'locked') void speakLetterName(letter)
+    else void speak(`${info.lower} for ${info.word}`)
   }
 
   return (

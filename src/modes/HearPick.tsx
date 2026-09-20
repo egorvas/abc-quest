@@ -9,7 +9,7 @@ import { shuffle } from '../engine/scheduler'
 import { playLetterNote } from '../audio/letterNote'
 import { sfx } from '../audio/sfx'
 import { haptic } from '../audio/haptics'
-import { speakLetterName } from '../audio/speak'
+import { speakLetterName, letterInSentence } from '../audio/speak'
 import { cheerSmall } from '../ui/celebrate'
 import './modes.css'
 
@@ -30,11 +30,6 @@ export function HearPick({ item, onDone, seq }: ModeProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [seq],
   )
-
-  useEffect(() => {
-    setStates({})
-    setLocked(false)
-  }, [seq])
 
   // After two misses the board shrinks to two tiles and the answer glows.
   useEffect(() => {
@@ -64,7 +59,7 @@ export function HearPick({ item, onDone, seq }: ModeProps) {
       setStates((current) => ({ ...current, [picked]: 'correct' }))
       playLetterNote(item.letter)
       haptic('success')
-      void speakLetterName(letterInfo(item.letter).name)
+      void speakLetterName(item.letter)
       if (!tracker.revealed) cheerSmall()
       window.setTimeout(() => tracker.finish(tracker.revealed ? 'almost' : 'right', tiles.length), 900)
       return
@@ -88,7 +83,7 @@ export function HearPick({ item, onDone, seq }: ModeProps) {
     <div className="mode">
       <div className="mode__prompt">
         <Speaker
-          text={`Find the letter ${letterInfo(item.letter).name}`}
+          text={`Find ${letterInSentence(item.letter)}`}
           autoKey={seq}
           fallback={item.glyphCase === 'lower' ? letterInfo(item.letter).lower : item.letter}
         />

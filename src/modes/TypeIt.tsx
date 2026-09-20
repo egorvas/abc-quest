@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { LetterId } from '../data/letters'
 import { letterInfo } from '../data/letters'
 import { Keyboard, type KeyboardLayout } from '../ui/Keyboard'
@@ -8,7 +8,7 @@ import type { ModeProps } from './types'
 import { playLetterNote } from '../audio/letterNote'
 import { sfx } from '../audio/sfx'
 import { haptic } from '../audio/haptics'
-import { speakLetterName } from '../audio/speak'
+import { speakLetterName, letterInSentence } from '../audio/speak'
 import { cheerSmall } from '../ui/celebrate'
 import './modes.css'
 import './TypeIt.css'
@@ -39,11 +39,6 @@ export function TypeIt({ item, onDone, seq }: ModeProps) {
   const layout: KeyboardLayout = item.level === 3 ? 'qwerty' : 'abc'
   const lowercase = item.glyphCase === 'lower'
 
-  useEffect(() => {
-    setTyped(null)
-    setLocked(false)
-  }, [seq])
-
   const handleKey = (key: LetterId) => {
     if (locked) return
     setTyped(key)
@@ -52,7 +47,7 @@ export function TypeIt({ item, onDone, seq }: ModeProps) {
       setLocked(true)
       playLetterNote(item.letter)
       haptic('success')
-      void speakLetterName(info.name)
+      void speakLetterName(item.letter)
       if (!tracker.revealed) cheerSmall()
       window.setTimeout(
         () => tracker.finish(tracker.revealed ? 'almost' : 'right', 26),
@@ -82,7 +77,7 @@ export function TypeIt({ item, onDone, seq }: ModeProps) {
     <div className="mode type">
       <div className="mode__prompt">
         <Speaker
-          text={`Type the letter ${info.name}`}
+          text={`Type ${letterInSentence(item.letter)}`}
           autoKey={seq}
           emoji="🔊"
           fallback={lowercase ? info.lower : item.letter}

@@ -1,98 +1,157 @@
 import type { LetterId } from '../data/letters'
+import { letterInfo } from '../data/letters'
 
 /**
  * What a speech recogniser actually returns when a small child says a single
- * English letter. Recognisers are tuned for words, not letters, so almost every
- * letter comes back as a homophone ("bee", "sea", "why") or a near miss.
+ * English letter.
  *
- * Everything here is lowercase and stripped of punctuation before comparison.
+ * Recognisers are tuned for words, not letters. Twenty-five of the twenty-six
+ * letter names are one syllable and they cluster into near-identical families
+ * (the "E set" B C D E G P T V Z, the "A set" A J K, the nasals M N, the
+ * fricatives F S X), so open 26-way classification is hopeless. Safari also
+ * exposes no grammar or phrase biasing.
+ *
+ * The app always knows which letter it asked for, so this is a yes/no test
+ * against one target rather than a classification. That removes nearly all of
+ * the cross-letter confusion.
+ *
+ * `ACCEPT` is safe to count as correct for that target. `CONFUSABLE` is what
+ * the engine tends to return instead: used only to say "not quite, try again",
+ * never to accept.
  */
-export const LETTER_ALIASES: Readonly<Record<LetterId, readonly string[]>> = {
-  A: ['a', 'ay', 'eh', 'hey', 'hay', 'aye', 'ai', 'ae', 'a.'],
-  B: ['b', 'bee', 'be', 'bi', 'bea', 'been', 'beep', 'b.'],
-  C: ['c', 'see', 'sea', 'si', 'cee', 'ce', 'seat', 'seed', 'c.'],
-  D: ['d', 'dee', 'de', 'di', 'the', 'dea', 'deed', 'd.'],
-  E: ['e', 'ee', 'eee', 'ea', 'eat', 'each', 'e.'],
-  F: ['f', 'ef', 'eff', 'ehf', 'if', 'f.'],
-  G: ['g', 'gee', 'jee', 'ji', 'gi', 'jeep', 'geez', 'g.'],
-  H: ['h', 'aitch', 'aich', 'ache', 'hatch', 'h.', 'age'],
-  I: ['i', 'eye', 'ai', 'aye', 'hi', 'high', 'i.'],
-  J: ['j', 'jay', 'jai', 'jae', 'j.', 'jays'],
-  K: ['k', 'kay', 'cay', 'okay', 'ka', 'k.'],
-  L: ['l', 'el', 'ell', 'elle', 'al', 'hell', 'l.'],
-  M: ['m', 'em', 'emm', 'am', 'hm', 'm.'],
-  N: ['n', 'en', 'enn', 'an', 'in', 'and', 'n.'],
-  O: ['o', 'oh', 'owe', 'ou', 'oo', 'o.'],
-  P: ['p', 'pee', 'pea', 'pe', 'pi', 'pee.', 'p.'],
-  Q: ['q', 'cue', 'queue', 'kyu', 'ku', 'coo', 'q.'],
-  R: ['r', 'ar', 'are', 'arr', 'our', 'hour', 'r.'],
-  S: ['s', 'ess', 'es', 'yes', 'as', 'is', 's.'],
-  T: ['t', 'tee', 'tea', 'te', 'ti', 'ty', 't.'],
-  U: ['u', 'you', 'yu', 'ew', 'ewe', 'yew', 'u.'],
-  V: ['v', 'vee', 've', 'we', 'vi', 'v.'],
-  W: ['w', 'double u', 'double you', 'doubleu', 'doubleyou', 'dub', 'dubya', 'w.'],
-  X: ['x', 'ex', 'ecks', 'eks', 'axe', 'ax', 'x.'],
-  Y: ['y', 'why', 'wy', 'wai', 'wine', 'y.'],
-  Z: ['z', 'zee', 'zed', 'ze', 'zi', 'said', 'z.'],
+
+export const ACCEPT: Readonly<Record<LetterId, readonly string[]>> = {
+  A: ['a', 'ay', 'aye', 'eh', 'ah', 'hey', 'hay', 'ei', 'eight', 'ate', 'ae'],
+  B: ['b', 'be', 'bee', 'bea', 'bi', 'beep', 'bees'],
+  C: ['c', 'see', 'sea', 'cee', 'si', 'ci', 'seed', 'cd'],
+  D: ['d', 'dee', 'de', 'dea', 'di', 'the'],
+  E: ['e', 'ee', 'eee', 'ea', 'he', 'hee', 'each', 'eat'],
+  F: ['f', 'ef', 'eff', 'if', 'of', 'ff', 'efe'],
+  G: ['g', 'gee', 'ge', 'jee', 'ghee', 'geez', 'jeez'],
+  H: ['h', 'aitch', 'aich', 'haitch', 'hache', 'age', 'ache', 'etch'],
+  I: ['i', 'eye', 'aye', 'ai', 'hi', 'high', 'ay'],
+  J: ['j', 'jay', 'jai', 'jae', 'jaye', 'gay', 'jah'],
+  K: ['k', 'kay', 'kae', 'cay', 'quay', 'ok', 'okay', 'o k', 'kai', 'ka'],
+  L: ['l', 'el', 'ell', 'elle', 'al', 'ale', 'hell', 'yell'],
+  M: ['m', 'em', 'emm', 'am', 'him', 'hm', 'mm', 'emma'],
+  N: ['n', 'en', 'enn', 'in', 'an', 'and', 'un', 'ian'],
+  O: ['o', 'oh', 'owe', 'ow', 'ooh', 'oo', 'zero', 'eau'],
+  P: ['p', 'pee', 'pea', 'pe', 'peep', 'peas', 'pi'],
+  Q: ['q', 'cue', 'queue', 'kyu', 'ku', 'que', 'cu', 'kew', 'coup'],
+  R: ['r', 'ar', 'are', 'arr', 'our', 'hour', 'err', 'aar'],
+  S: ['s', 'es', 'ess', 'as', 'yes', 'sss', 'esse'],
+  T: ['t', 'tee', 'tea', 'te', 'ti', 'tt'],
+  U: ['u', 'you', 'yu', 'ewe', 'yew', 'ya', 'hue', 'hugh', 'ooh'],
+  V: ['v', 'vee', 've', 'vi', 'we', 'vie', 'veep'],
+  W: [
+    'w', 'double u', 'double you', 'double u', 'double yu', 'doubleu',
+    'doubleyou', 'dubya', 'dub', 'double v',
+  ],
+  X: ['x', 'ex', 'eks', 'ecks', 'axe', 'ax', 'exe', 'excess', 'x ray', 'xray'],
+  Y: ['y', 'why', 'wye', 'wai', 'wy', 'wi', 'yi'],
+  Z: ['z', 'zee', 'zed', 'ze', 'zi', 'zeb', 'xi', 'these', 'zeta'],
 }
 
-/** Ambiguous transcripts that could be two different letters. */
-const CONTESTED = new Set(['ai', 'aye', 'a', 'i'])
+/** What the engine is likely to hear instead. Worth a retry, not a pass. */
+export const CONFUSABLE: Readonly<Record<LetterId, readonly LetterId[]>> = {
+  A: ['H', 'J', 'K', 'I'],
+  B: ['V', 'P', 'D', 'E', 'G', 'C', 'T', 'Z'],
+  C: ['D', 'E', 'G', 'P', 'T', 'V', 'Z', 'B', 'S'],
+  D: ['B', 'E', 'G', 'P', 'T', 'V', 'C', 'Z'],
+  E: ['B', 'C', 'D', 'G', 'P', 'T', 'V', 'Z'],
+  F: ['S', 'X', 'L', 'M', 'N'],
+  G: ['J', 'Z', 'D', 'T', 'V', 'B', 'C', 'E', 'P'],
+  H: ['A', 'K'],
+  I: ['Y', 'A'],
+  J: ['G', 'K', 'A'],
+  K: ['A', 'J', 'Q'],
+  L: ['M', 'N', 'F', 'S', 'R'],
+  M: ['N', 'L'],
+  N: ['M', 'L'],
+  O: ['W', 'U'],
+  P: ['B', 'T', 'D', 'E', 'G', 'C', 'V', 'Z'],
+  Q: ['U', 'K', 'W'],
+  R: ['L', 'A'],
+  S: ['F', 'X', 'C', 'Z'],
+  T: ['B', 'C', 'D', 'E', 'G', 'P', 'V', 'Z'],
+  U: ['Q', 'W', 'O'],
+  V: ['B', 'C', 'D', 'E', 'G', 'P', 'T', 'Z'],
+  W: ['U', 'O', 'Y'],
+  X: ['S', 'F'],
+  Y: ['I', 'W'],
+  Z: ['C', 'D', 'E', 'G', 'T', 'V', 'B', 'S'],
+}
 
-const LOOKUP: ReadonlyMap<string, LetterId[]> = (() => {
-  const map = new Map<string, LetterId[]>()
-  for (const [letter, aliases] of Object.entries(LETTER_ALIASES)) {
-    for (const alias of aliases) {
-      const existing = map.get(alias)
-      if (existing) existing.push(letter as LetterId)
-      else map.set(alias, [letter as LetterId])
-    }
-  }
-  return map
-})()
+/** Transcripts that genuinely belong to two letters at once. */
+const AMBIGUOUS = new Set(['a', 'i', 'ay', 'aye', 'ai', 'ei', 'ooh', 'oo'])
+
+const FILLERS = /^(the|a|letter|its|it's|that's|thats|i said|say|um|uh|er)\s+/
 
 export function normalizeTranscript(raw: string): string {
-  return raw
+  let text = raw
     .toLowerCase()
-    .replace(/[^a-z\s]/g, '')
+    .replace(/[^a-z\s]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
+  // Safari capitalises and adds a trailing period; children add "it's a...".
+  let previous = ''
+  while (previous !== text) {
+    previous = text
+    text = text.replace(FILLERS, '')
+  }
+  return text
+}
+
+/** The association word counts too: "ball" is easier to recognise than "bee". */
+function acceptedFor(letter: LetterId): readonly string[] {
+  const info = letterInfo(letter)
+  return [...ACCEPT[letter], info.word.toLowerCase(), info.lower]
 }
 
 export type SpeechVerdict =
   | { readonly kind: 'match' }
-  /** Understood, but it is a different letter - useful for the confusion map. */
+  /** Understood, but a different letter - feeds the confusion map. */
   | { readonly kind: 'other'; readonly heard: LetterId }
   | { readonly kind: 'unknown'; readonly heard: string }
 
 /**
- * Decides whether any of the recogniser's alternatives is the target letter.
- * Ambiguous transcripts resolve in the child's favour: if "ai" could be A or I
- * and the target is I, it counts.
+ * Decides whether any alternative the recogniser offered is the target letter.
+ *
+ * Ambiguity resolves in the child's favour: "ai" could be A or I, and if the
+ * target is I, it counts.
  */
 export function judgeTranscripts(
   target: LetterId,
   transcripts: readonly string[],
 ): SpeechVerdict {
-  const seen: LetterId[] = []
+  const accepted = new Set(acceptedFor(target))
+  let heardOther: LetterId | null = null
+  let lastText = ''
+
   for (const raw of transcripts) {
     const text = normalizeTranscript(raw)
     if (!text) continue
+    lastText = text
 
-    const candidates = new Set<LetterId>()
-    for (const token of [text, ...text.split(' ')]) {
-      for (const letter of LOOKUP.get(token) ?? []) candidates.add(letter)
+    const tokens = [text, ...text.split(' ')]
+    for (const token of tokens) {
+      if (accepted.has(token)) return { kind: 'match' }
     }
-    // "the letter b" / "letter bee" - strip the carrier phrase.
-    const stripped = text.replace(/^(the\s+)?letter\s+/, '')
-    for (const letter of LOOKUP.get(stripped) ?? []) candidates.add(letter)
 
-    if (candidates.has(target)) return { kind: 'match' }
-    for (const letter of candidates) {
-      if (!CONTESTED.has(text)) seen.push(letter)
+    if (heardOther === null) {
+      for (const candidate of CONFUSABLE[target]) {
+        const candidateWords = new Set(acceptedFor(candidate))
+        const hit = tokens.find(
+          (token) => candidateWords.has(token) && !AMBIGUOUS.has(token),
+        )
+        if (hit) {
+          heardOther = candidate
+          break
+        }
+      }
     }
   }
-  if (seen.length > 0) return { kind: 'other', heard: seen[0] }
-  const first = transcripts.map(normalizeTranscript).find(Boolean) ?? ''
-  return { kind: 'unknown', heard: first }
+
+  if (heardOther) return { kind: 'other', heard: heardOther }
+  return { kind: 'unknown', heard: lastText }
 }

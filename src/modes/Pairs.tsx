@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import type { LetterId } from '../data/letters'
 import { letterInfo } from '../data/letters'
 import { useAttempt } from './useAttempt'
@@ -52,13 +52,6 @@ export function Pairs({ item, onDone, seq }: ModeProps) {
     [seq],
   )
 
-  useEffect(() => {
-    setOpen([])
-    setMatched([])
-    setBusy(false)
-    cleanMatch.current = true
-  }, [seq])
-
   const handleFlip = (card: Card) => {
     if (busy || open.includes(card.key) || matched.includes(card.letter)) return
     unlockAudio()
@@ -66,7 +59,7 @@ export function Pairs({ item, onDone, seq }: ModeProps) {
     const next = [...open, card.key]
     setOpen(next)
     // Level 3 keeps quiet: matching by shape alone is the harder skill.
-    if (item.level < 3) void speakLetterName(letterInfo(card.letter).name)
+    if (item.level < 3) void speakLetterName(card.letter)
 
     if (next.length < 2) return
 
@@ -78,7 +71,7 @@ export function Pairs({ item, onDone, seq }: ModeProps) {
     if (first && second && first.letter === second.letter) {
       playLetterNote(first.letter)
       haptic('success')
-      void speak(`${first.letter} and ${letterInfo(first.letter).lower} — the same letter`)
+      void speak(`${first.letter} and ${letterInfo(first.letter).lower}. The same letter`)
       const nextMatched = [...matched, first.letter]
       window.setTimeout(() => {
         setMatched(nextMatched)

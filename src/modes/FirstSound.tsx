@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { LetterId } from '../data/letters'
 import { letterInfo } from '../data/letters'
 import { useAttempt } from './useAttempt'
@@ -36,11 +36,6 @@ export function FirstSound({ item, onDone, seq }: ModeProps) {
     [seq],
   )
 
-  useEffect(() => {
-    setDead([])
-    setLocked(false)
-  }, [seq])
-
   const pick = (picked: LetterId) => {
     if (locked || dead.includes(picked)) return
     unlockAudio()
@@ -49,7 +44,7 @@ export function FirstSound({ item, onDone, seq }: ModeProps) {
       setLocked(true)
       playLetterNote(item.letter)
       haptic('success')
-      void speak(`${info.name} for ${info.word}`)
+      void speak(`${info.lower} for ${info.word}`)
       if (!tracker.revealed) cheerSmall()
       window.setTimeout(
         () => tracker.finish(tracker.revealed ? 'almost' : 'right', options.length),
@@ -102,7 +97,7 @@ export function FirstSound({ item, onDone, seq }: ModeProps) {
       ) : (
         <>
           <Speaker
-            text={`${info.name}. ${info.name} is for...`}
+            text={`${info.lower}. ${info.lower} is for...`}
             autoKey={seq}
             emoji="🔊"
             fallback={item.letter}

@@ -51,6 +51,13 @@
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
+  /* Excluding pinch-zoom here is what actually disables it: the viewport meta
+     has been ignored since iOS 10. A single element declaring `manipulation`
+     would switch pinch back on for the whole page, so nothing else may set it. */
+  touch-action: pan-x pan-y;
+  /* iPad has system drag-and-drop, so callout suppression alone is not enough
+     to stop a child dragging a glyph off the board. */
+  -webkit-user-drag: none;
 }
 
 html,
@@ -73,7 +80,6 @@ body {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
-  touch-action: manipulation;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -84,7 +90,6 @@ button {
   border: none;
   background: none;
   cursor: pointer;
-  touch-action: manipulation;
 }
 
 input,
@@ -92,6 +97,7 @@ textarea {
   font: inherit;
   /* 16px minimum stops iOS Safari from zooming the page on focus. */
   font-size: max(16px, 1rem);
+  /* WebKit makes fields uneditable when an ancestor disables selection. */
   -webkit-user-select: text;
   user-select: text;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { letterInfo } from '../data/letters'
 import { TraceCanvas, type TraceScore } from '../ui/TraceCanvas'
 import { Button } from '../ui/Button'
@@ -8,7 +8,7 @@ import type { ModeProps } from './types'
 import { TUNING } from '../engine/tuning'
 import { playLetterNote } from '../audio/letterNote'
 import { haptic } from '../audio/haptics'
-import { speak } from '../audio/speak'
+import { speak, letterInSentence } from '../audio/speak'
 import { cheerSmall } from '../ui/celebrate'
 import './modes.css'
 import './TraceIt.css'
@@ -31,12 +31,6 @@ export function TraceIt({ item, onDone, seq }: ModeProps) {
   const info = letterInfo(item.letter)
   const glyph = item.glyphCase === 'lower' ? info.lower : item.letter
 
-  useEffect(() => {
-    setAttempt(0)
-    setScore(null)
-    setLocked(false)
-  }, [seq])
-
   const handleScore = (result: TraceScore) => {
     if (locked) return
     setScore(result)
@@ -49,7 +43,7 @@ export function TraceIt({ item, onDone, seq }: ModeProps) {
     setLocked(true)
     playLetterNote(item.letter)
     haptic('success')
-    void speak(`${info.name}. ${info.name} for ${info.word}`)
+    void speak(`${info.lower}. ${info.lower} for ${info.word}`)
     if (good) cheerSmall()
     window.setTimeout(() => tracker.finish(good ? 'right' : 'almost', 1), 1100)
   }
@@ -64,7 +58,7 @@ export function TraceIt({ item, onDone, seq }: ModeProps) {
   return (
     <div className="mode trace-mode">
       <div className="mode__prompt">
-        <Speaker text={`Trace the letter ${info.name}`} autoKey={seq} emoji="✏️" fallback={glyph} />
+        <Speaker text={`Trace ${letterInSentence(item.letter)}`} autoKey={seq} emoji="✏️" fallback={glyph} />
         <p className="mode__hint">{quality}</p>
       </div>
 

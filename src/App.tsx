@@ -8,6 +8,7 @@ import { ProfilesScreen } from './screens/ProfilesScreen'
 import type { ModeId } from './modes/types'
 import { unlockAudio } from './audio/sfx'
 import { warmUpSpeech } from './audio/speak'
+import { claimPlaybackSession, keepScreenAwake, watchAudioSession } from './audio/session'
 
 type Route =
   | { readonly name: 'home' }
@@ -20,15 +21,25 @@ function Router() {
   const { profile } = useGame()
   const [route, setRoute] = useState<Route>({ name: 'home' })
 
-  // iOS only lets audio and speech start from inside a gesture, so the very
-  // first touch anywhere unlocks both for the rest of the visit.
+  // iOS only lets audio and speech start from inside a gesture, and the
+  // restriction is re-armed on every page load, so the first completed tap
+  // unlocks both for the rest of the visit. It listens for the end of the
+  // gesture, not the start: that is what WebKit counts as activation.
   useEffect(() => {
     const unlock = () => {
+      claimPlaybackSession()
       unlockAudio()
       warmUpSpeech()
+      void keepScreenAwake()
     }
-    window.addEventListener('pointerdown', unlock, { once: true })
-    return () => window.removeEventListener('pointerdown', unlock)
+    window.addEventListener('touchend', unlock, { once: true })
+    window.addEventListener('click', unlock, { once: true })
+    const stopWatching = watchAudioSession()
+    return () => {
+      window.removeEventListener('touchend', unlock)
+      window.removeEventListener('click', unlock)
+      stopWatching()
+    }
   }, [])
 
   if (!profile) {

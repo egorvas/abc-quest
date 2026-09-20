@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { LetterId } from '../data/letters'
 import { letterInfo } from '../data/letters'
 import { useAttempt } from './useAttempt'
@@ -33,12 +33,6 @@ export function ChooseIt({ item, onDone, seq }: ModeProps) {
     [seq],
   )
 
-  useEffect(() => {
-    setArmed(null)
-    setDead([])
-    setLocked(false)
-  }, [seq])
-
   const commit = (picked: LetterId) => {
     const verdict = tracker.verdictFor(picked)
     if (verdict === 'right') {
@@ -67,7 +61,7 @@ export function ChooseIt({ item, onDone, seq }: ModeProps) {
       return
     }
     setArmed(option)
-    void speakLetterName(letterInfo(option).name)
+    void speakLetterName(option)
   }
 
   const glyph =

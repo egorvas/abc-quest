@@ -7,7 +7,7 @@ import { Button } from '../ui/Button'
 import { listenOnce, speechRecognitionSupported, type ListenHandle } from '../speech/recognizer'
 import { judgeTranscripts } from '../speech/letterAliases'
 import { playLetterNote } from '../audio/letterNote'
-import { speak, speakLetterName } from '../audio/speak'
+import { speak, speakLetterName, stopSpeaking } from '../audio/speak'
 import { haptic } from '../audio/haptics'
 import { sfx } from '../audio/sfx'
 import { cheerSmall } from '../ui/celebrate'
@@ -53,7 +53,7 @@ export function SayIt({ item, onDone, seq }: ModeProps) {
     playLetterNote(item.letter)
     haptic('success')
     if (!assistedByEcho) cheerSmall()
-    void speakLetterName(info.name)
+    void speakLetterName(item.letter)
     window.setTimeout(() => tracker.finish(assistedByEcho ? 'almost' : 'right', 1), 900)
   }
 
@@ -63,6 +63,15 @@ export function SayIt({ item, onDone, seq }: ModeProps) {
       return
     }
     setNote('')
+    setMic('thinking')
+    // Synthesis and recognition cannot run at the same time on iOS: with a
+    // voice still playing, recognition returns nothing at all. Stop the prompt
+    // and leave a gap before opening the microphone.
+    stopSpeaking()
+    window.setTimeout(() => beginListening(), 320)
+  }
+
+  const beginListening = () => {
     setMic('listening')
     const listener = listenOnce({
       maxMs: 5000,
@@ -108,7 +117,7 @@ export function SayIt({ item, onDone, seq }: ModeProps) {
   }
 
   const echo = () => {
-    void speakLetterName(info.name).then(() => {
+    void speakLetterName(item.letter).then(() => {
       window.setTimeout(() => succeed(true), 400)
     })
   }

@@ -39,15 +39,6 @@ export function useAttempt(
   const [revealed, setRevealed] = useState(false)
   const settled = useRef(false)
 
-  useEffect(() => {
-    started.current = Date.now()
-    settled.current = false
-    setWrongPicks([])
-    setMisses(0)
-    setHinting(false)
-    setRevealed(false)
-  }, [seq])
-
   // A child who stares at the screen is not being taught anything.
   useEffect(() => {
     const hintTimer = window.setTimeout(() => setHinting(true), TUNING.hintAfterIdleMs)
