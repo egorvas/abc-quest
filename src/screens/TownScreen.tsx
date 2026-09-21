@@ -105,7 +105,7 @@ export function TownScreen({ onBack, onPlayLetter, open }: TownScreenProps) {
         }
         right={
           <div className="town__purse">
-            <span className="town__pill">🌰 {profile.seeds}</span>
+            <span className="town__pill">🪙 {profile.seeds}</span>
             <span className="town__pill town__pill--dim">🏆 {profile.seedsEarned}</span>
             <Button size="sm" tone="ghost" onPress={() => setExtrasOpen(true)} ariaLabel="Town extras">
               🎪

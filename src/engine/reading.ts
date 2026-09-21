@@ -198,8 +198,10 @@ export interface WordQuery {
   readonly picturesOnly?: boolean
   /** Only words whose onset can be stretched: the first blending stage. */
   readonly continuantOnly?: boolean
-  /** A lesson names its own word stages; free play follows the derived stage. */
+  /** A level names its own word stages; free play follows the derived stage. */
   readonly stages?: readonly WordStage[]
+  /** Skip the grapheme gate: the level put the sounds before the words already. */
+  readonly ungated?: boolean
 }
 
 /**
@@ -223,7 +225,7 @@ export function wordsForLetter(
     if (query.picturesOnly && word.picture === 'none') return false
     if (query.continuantOnly && !word.continuantOnset) return false
     if (gapIndexFor(word, query.letter, position) === null) return false
-    return wordUnlocked(profile, word)
+    return query.ungated === true || wordUnlocked(profile, word)
   })
     .map((word) => {
       const p = wordBestRecall(profile, word, now)

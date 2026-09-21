@@ -11,21 +11,12 @@ import { storeSizeBytes, storageIsPersistent } from '../storage/store'
 import { townCompletion } from '../engine/town'
 import { speechRecognitionSupported } from '../speech/recognizer'
 import { ttsSupported } from '../audio/speak'
-import type { ReadingLevel } from '../storage/schema'
+import { LEVEL_COUNT, currentLevel, levelsDone, tierOf } from '../engine/levels'
 import './ParentsScreen.css'
-
-const READING_LABEL: Readonly<Record<ReadingLevel, string>> = {
-  none: 'not yet',
-  letters: 'letter by letter',
-  words: 'short words',
-  syllables: 'longer words',
-  fluent: 'reads sentences',
-}
 
 interface ParentsScreenProps {
   readonly onBack: () => void
   readonly onEditKnown: () => void
-  readonly onSurvey: () => void
 }
 
 /**
@@ -35,8 +26,8 @@ interface ParentsScreenProps {
  * Everything shown here is derived from the records the engine already keeps;
  * nothing extra is stored to produce it.
  */
-export function ParentsScreen({ onBack, onEditKnown, onSurvey }: ParentsScreenProps) {
-  const { profile, store, updateSettings, importStore, saveFailed } = useGame()
+export function ParentsScreen({ onBack, onEditKnown }: ParentsScreenProps) {
+  const { profile, store, updateSettings, importStore, saveFailed, skipLevels, restartLevels } = useGame()
   const [unlocked, setUnlocked] = useState(false)
   const [answer, setAnswer] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
@@ -187,7 +178,7 @@ export function ParentsScreen({ onBack, onEditKnown, onSurvey }: ParentsScreenPr
             </div>
             <div className="pstat">
               <b>{profile.seedsEarned}</b>
-              <span>nuts earned</span>
+              <span>coins earned</span>
             </div>
           </div>
         </section>
@@ -247,14 +238,36 @@ export function ParentsScreen({ onBack, onEditKnown, onSurvey }: ParentsScreenPr
             <Button onPress={onEditKnown} tone="amber" size="sm">
               ✎ Tick the known letters
             </Button>
-            <Button onPress={onSurvey} tone="ghost" size="sm">
-              🗺️ Redo the survey
+          </div>
+        </section>
+
+        <section className="pcard">
+          <h2 className="pcard__h">Levels</h2>
+          <p className="pcard__muted">
+            {levelsDone(profile)} of {LEVEL_COUNT} passed.{' '}
+            {currentLevel(profile)
+              ? `Next: level ${currentLevel(profile)} (${tierOf(currentLevel(profile) ?? 1).title}).`
+              : 'The climb is finished and the whole town is open.'}{' '}
+            A child who already knows the letters can skip ahead; skipped levels
+            count as passed with one star and pay no coins.
+          </p>
+          <div className="pcard__actions">
+            <Button onPress={() => skipLevels(5)} tone="amber" size="sm">
+              ⏩ Skip 5 levels
+            </Button>
+            <Button onPress={() => skipLevels(1)} tone="ghost" size="sm">
+              ⏩ Skip 1
+            </Button>
+            <Button
+              onPress={() => {
+                if (window.confirm('Start again from level 1? Coins and the town are kept.')) restartLevels()
+              }}
+              tone="danger"
+              size="sm"
+            >
+              ↺ Restart from level 1
             </Button>
           </div>
-          <p className="pcard__muted">
-            Reading level: {READING_LABEL[profile.readingLevel]}. The survey sets
-            where the path starts; lessons it skips stay open to replay.
-          </p>
         </section>
 
         <section className="pcard">

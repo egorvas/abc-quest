@@ -6,8 +6,7 @@ import { TownScreen } from './screens/TownScreen'
 import { ParentsScreen } from './screens/ParentsScreen'
 import { ProfilesScreen } from './screens/ProfilesScreen'
 import { KnownLettersScreen } from './screens/KnownLettersScreen'
-import { SurveyScreen } from './screens/SurveyScreen'
-import { PathScreen } from './screens/PathScreen'
+import { LevelsScreen } from './screens/LevelsScreen'
 import { GamesScreen } from './screens/GamesScreen'
 import type { ModeId } from './modes/types'
 import type { LetterId } from './data/letters'
@@ -22,11 +21,10 @@ type Route =
       readonly name: 'session'
       readonly modeIds?: readonly ModeId[]
       readonly focus?: LetterId
-      readonly lesson?: string
+      readonly level?: number
     }
-  | { readonly name: 'path' }
+  | { readonly name: 'levels' }
   | { readonly name: 'games' }
-  | { readonly name: 'survey' }
   | { readonly name: 'town'; readonly open?: { readonly letter: LetterId; readonly slot: SlotId } }
   | { readonly name: 'parents' }
   | { readonly name: 'profiles' }
@@ -61,24 +59,18 @@ function Router() {
     return <ProfilesScreen onDone={() => setRoute({ name: 'home' })} canCancel={false} />
   }
 
-  // A brand-new profile is asked what the child already knows before the first
-  // lesson, so the path starts where the child actually is.
-  if (!profile.placed && route.name === 'home') {
-    return <SurveyScreen onDone={() => setRoute({ name: 'home' })} />
-  }
-
   switch (route.name) {
     case 'session':
       return (
         <SessionScreen
-          key={route.lesson ?? route.focus ?? route.modeIds?.join(',') ?? 'mixed'}
+          key={route.level ?? route.focus ?? route.modeIds?.join(',') ?? 'mixed'}
           modeIds={route.modeIds}
           focus={route.focus}
-          lesson={route.lesson}
+          level={route.level}
           onHome={() => setRoute({ name: 'home' })}
           onTown={(open) => setRoute({ name: 'town', open })}
-          onLesson={(lesson) => setRoute({ name: 'session', lesson })}
-          onPath={() => setRoute({ name: 'path' })}
+          onLevel={(level) => setRoute({ name: 'session', level })}
+          onLevels={() => setRoute({ name: 'levels' })}
         />
       )
     case 'town':
@@ -94,7 +86,6 @@ function Router() {
         <ParentsScreen
           onBack={() => setRoute({ name: 'home' })}
           onEditKnown={() => setRoute({ name: 'known' })}
-          onSurvey={() => setRoute({ name: 'survey' })}
         />
       )
     case 'known':
@@ -105,18 +96,11 @@ function Router() {
           onSkip={() => setRoute({ name: 'parents' })}
         />
       )
-    case 'survey':
+    case 'levels':
       return (
-        <SurveyScreen
-          onDone={() => setRoute({ name: 'home' })}
-          onCancel={() => setRoute({ name: 'parents' })}
-        />
-      )
-    case 'path':
-      return (
-        <PathScreen
+        <LevelsScreen
           onBack={() => setRoute({ name: 'home' })}
-          onLesson={(lesson) => setRoute({ name: 'session', lesson })}
+          onLevel={(level) => setRoute({ name: 'session', level })}
         />
       )
     case 'games':
@@ -132,8 +116,8 @@ function Router() {
     default:
       return (
         <HomeScreen
-          onLearn={(lesson) => setRoute({ name: 'session', lesson })}
-          onPath={() => setRoute({ name: 'path' })}
+          onPlay={(level) => setRoute({ name: 'session', level })}
+          onLevels={() => setRoute({ name: 'levels' })}
           onGames={() => setRoute({ name: 'games' })}
           onTown={() => setRoute({ name: 'town' })}
           onParents={() => setRoute({ name: 'parents' })}

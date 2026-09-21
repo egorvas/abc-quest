@@ -5,10 +5,7 @@ import { applyAnswer, NEW_CELL, dayIndex } from './memory'
 import { cellKey } from './skills'
 import { recordConfusion, decayConfusions } from './confusion'
 import { TUNING } from './tuning'
-import { applyWordAnswer, wordCellKey } from './reading'
-import { autoPassLessons } from './path'
-import { WORDS } from '../data/words'
-import type { ReadingLevel } from '../storage/schema'
+import { applyWordAnswer } from './reading'
 import type { LetterId } from '../data/letters'
 
 /**
@@ -177,64 +174,4 @@ export function finishRound(
     lastPlayDay: today,
     sessions: [summary, ...profile.sessions].slice(0, TUNING.historyLimit),
   }
-}
-
-/**
- * The onboarding answers, applied at once: which letters are known and how
- * far the child reads. Reading ability seeds the word cells of the stages the
- * parent vouched for - short of solid, so the words still have to prove
- * themselves - and passes the lessons the child has clearly outgrown.
- */
-export function applySurvey(
-  profile: Profile,
-  known: readonly LetterId[],
-  level: ReadingLevel,
-  now: number,
-): Profile {
-  let next = placeKnownLetters(profile, known, now)
-  const today = dayIndex(now)
-  const stagesByLevel = {
-    none: [],
-    letters: [],
-    words: ['vc', 'cvc-cont', 'cvc', 'cvc-x'],
-    syllables: ['vc', 'cvc-cont', 'cvc', 'cvc-x', 'digraph'],
-    fluent: ['vc', 'cvc-cont', 'cvc', 'cvc-x', 'digraph', 'twosyl'],
-  } as const
-  const stages: readonly string[] = stagesByLevel[level]
-  const head: Cell = {
-    h: TUNING.reading.wordReadyHalfLifeDays,
-    t: now,
-    n: 2,
-    k: 2,
-    cc: 2,
-    kg: 2,
-    kp: 0,
-    days: 1,
-    lastDay: today,
-  }
-  const cells = { ...next.cells }
-  const seeded: string[] = []
-  for (const word of WORDS) {
-    if (!stages.includes(word.stage)) continue
-    const key = wordCellKey(word.id, 'read')
-    if ((cells[key]?.n ?? 0) > 0) continue
-    cells[key] = head
-    seeded.push(word.id)
-  }
-  // A vouched-for reader also gets a passing transfer record, so the derived
-  // reading stage agrees with the path from the first round.
-  const novel =
-    seeded.length > 0
-      ? seeded.slice(0, 8).map((w) => ({ w, ok: true, at: now }))
-      : next.reading.novel
-  next = {
-    ...next,
-    cells,
-    readingLevel: level,
-    reading: {
-      novel,
-      wordsIntroduced: [...new Set([...next.reading.wordsIntroduced, ...seeded])],
-    },
-  }
-  return autoPassLessons(next, known, level, now)
 }

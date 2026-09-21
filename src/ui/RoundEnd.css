@@ -110,3 +110,14 @@
   from { transform: scale(0.2) rotate(-30deg); opacity: 0; }
   to { transform: scale(1) rotate(0); opacity: 1; }
 }
+
+.done__level {
+  margin: -6px 0 4px;
+  color: var(--ink-faint);
+  font-weight: 700;
+}
+
+.done__nut--none {
+  font-size: 16px;
+  color: var(--ink-faint);
+}

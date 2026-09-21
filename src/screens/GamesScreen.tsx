@@ -14,9 +14,10 @@ interface GamesScreenProps {
 }
 
 /**
- * Free play: one game, or the mixed round. This is the playground next to
- * the path; the scheduler still picks the letters and words the child needs,
- * it just does so inside the game the child asked for.
+ * Practice: one game, or the mixed round. This is the playground next to the
+ * levels; the scheduler still picks the letters and words the child needs, it
+ * just does so inside the game the child asked for. Coins come from levels
+ * only, so practice is for its own sake.
  */
 export function GamesScreen({ onBack, onPlay, onPickMode }: GamesScreenProps) {
   const { profile } = useGame()
@@ -41,8 +42,8 @@ export function GamesScreen({ onBack, onPlay, onPickMode }: GamesScreenProps) {
             🏠
           </Button>
         }
-        center={<span className="home__name">Games</span>}
-        right={<span className="home__stat">🌰 {profile.seeds}</span>}
+        center={<span className="home__name">Practice</span>}
+        right={<span className="home__stat home__stat--dim">no coins here</span>}
       />
       <div className="home__body">
         <div className="home__cta">

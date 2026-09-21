@@ -23,9 +23,8 @@ export function owns(town: Town, letter: LetterId, slot: SlotId): boolean {
 }
 
 /**
- * Gate only. Front opens when the letter is introduced, back when its garden
- * bed has flowered, friend when the letter has its gold star. Says nothing
- * about the purse.
+ * Gate only. Front and back open when the letter has been met in a level,
+ * the friend when the letter has its gold star. Says nothing about the purse.
  */
 export function isUnlocked(
   profile: Profile,
@@ -33,9 +32,27 @@ export function isUnlocked(
   slot: SlotId,
   now: number,
 ): boolean {
-  if (slot === 'front') return profile.introduced.includes(letter)
-  if (slot === 'back') return bedFor(profile, letter, now).stage >= 2
-  return letterStatus(profile, letter, now).stage === 'mastered'
+  if (slot === 'friend') return letterStatus(profile, letter, now).stage === 'mastered'
+  return profile.introduced.includes(letter)
+}
+
+/** Passed levels, counted here so the town needs nothing from the levels module. */
+function levelsPassed(profile: Profile): number {
+  return Object.values(profile.levels).filter((stars) => stars > 0).length
+}
+
+/**
+ * The prize for the last level: every lot and every extra, at once. Nothing
+ * is charged and the purse is kept, so what is left can still be spent on
+ * nothing in particular.
+ */
+export function grantWholeTown(profile: Profile): Profile {
+  const lots = Object.fromEntries(LETTER_IDS.map((letter) => [letter, 'fbr'])) as Town['lots']
+  return {
+    ...profile,
+    introduced: [...LETTER_IDS],
+    town: { ...profile.town, lots, extras: [...EXTRA_IDS] },
+  }
 }
 
 export function canAfford(profile: Profile, item: TownItem): boolean {
@@ -77,14 +94,14 @@ export function buyItem(
 }
 
 export function extraUnlocked(profile: Profile, extra: ExtraId): boolean {
-  return profile.stones >= TUNING.town.extraAt[extra]
+  return levelsPassed(profile) >= TUNING.town.extraAt[extra]
 }
 
 export function ownsExtra(town: Town, extra: ExtraId): boolean {
   return town.extras.includes(extra)
 }
 
-/** Same contract as buyItem for a town-wide extra, gated on days played. */
+/** Same contract as buyItem for a town-wide extra, gated on levels passed. */
 export function buyExtra(profile: Profile, extra: ExtraId): Profile {
   const price = TUNING.town.extraPrice
   if (ownsExtra(profile.town, extra)) return profile
@@ -111,7 +128,7 @@ export interface LotSlotView {
   /** Nuts still missing. Zero when owned or affordable. */
   readonly shortBy: number
   /** The milestone that opens a locked slot, for the sheet's icon. */
-  readonly gateIcon: '⭐' | '🌼' | null
+  readonly gateIcon: '⭐' | '🔤' | null
 }
 
 export interface LotView {
@@ -137,7 +154,7 @@ export function lotView(profile: Profile, letter: LetterId, now: number): LotVie
       unlocked,
       affordable,
       shortBy: owned || affordable ? 0 : item.price - profile.seeds,
-      gateIcon: unlocked ? null : item.slot === 'friend' ? '⭐' : '🌼',
+      gateIcon: unlocked ? null : item.slot === 'friend' ? '⭐' : '🔤',
     }
   })
   return {
@@ -159,8 +176,8 @@ export interface ExtraView {
   readonly price: number
   readonly owned: boolean
   readonly unlocked: boolean
-  /** Days played still needed before it opens. */
-  readonly daysToGo: number
+  /** Levels still to pass before it opens. */
+  readonly levelsToGo: number
 }
 
 export function extrasFor(profile: Profile): readonly ExtraView[] {
@@ -169,7 +186,7 @@ export function extrasFor(profile: Profile): readonly ExtraView[] {
     price: TUNING.town.extraPrice,
     owned: ownsExtra(profile.town, id),
     unlocked: extraUnlocked(profile, id),
-    daysToGo: Math.max(0, TUNING.town.extraAt[id] - profile.stones),
+    levelsToGo: Math.max(0, TUNING.town.extraAt[id] - levelsPassed(profile)),
   }))
 }
 

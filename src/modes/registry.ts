@@ -131,7 +131,7 @@ export const MODES: Readonly<Record<ModeId, ModeMeta>> = {
     options: (level) => (level === 1 ? 2 : level === 2 ? 3 : level === 3 ? 4 : 5),
     gamma: pick,
     weight: () => CHANNEL_WEIGHT.recognition * 1.2,
-    maxShare: 0.25,
+    maxShare: 0.5,
     inAdventure: true,
   },
 

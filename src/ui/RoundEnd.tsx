@@ -17,13 +17,13 @@ interface RoundEndProps {
   /** The purse after the award has been added. */
   readonly purse: number
   readonly spendTarget: { readonly letter: LetterId; readonly slot: SlotId } | null
-  /** Stars for a lesson round, 1 to 3. Absent in free play. */
-  readonly stars?: number
-  readonly nextLesson?: { readonly id: string; readonly title: string } | null
+  /** A level's verdict. Absent in practice. */
+  readonly level?: { readonly n: number; readonly passed: boolean; readonly stars: number }
+  readonly nextLevel?: number | null
   readonly onAgain: () => void
   readonly onHome: () => void
   readonly onTown: (open?: { readonly letter: LetterId; readonly slot: SlotId }) => void
-  /** Continues along the path: the next lesson, or the path when it is done. */
+  /** Continues the climb: the next level, or the map when it is finished. */
   readonly onNext?: () => void
 }
 
@@ -41,8 +41,8 @@ export function RoundEnd({
   total,
   purse,
   spendTarget,
-  stars,
-  nextLesson,
+  level,
+  nextLevel,
   onAgain,
   onHome,
   onTown,
@@ -53,7 +53,7 @@ export function RoundEnd({
   const [shown, setShown] = useState(0)
 
   const drops = [
-    ...Array.from({ length: award.base }, () => ({ icon: '🌰', label: '' })),
+    ...Array.from({ length: award.base }, () => ({ icon: '🪙', label: '' })),
     ...award.bonuses.map((bonus) => ({
       icon: BONUS_ICON[bonus.kind],
       label: `+${bonus.nuts}`,
@@ -101,11 +101,14 @@ export function RoundEnd({
 
   const visible = drops.slice(0, shown)
   const collapsed = drops.length > 12
+  const failed = level ? !level.passed : false
+  const stars = level?.stars ?? 0
+  const practice = !level
 
   return (
     <Screen className="session session--done">
       <div className="done">
-        {stars ? (
+        {level ? (
           <div className="done__stars" aria-label={`${stars} of 3 stars`}>
             {[1, 2, 3].map((n) => (
               <span
@@ -121,15 +124,30 @@ export function RoundEnd({
           <div className="done__badge">🌟</div>
         )}
         <h1 className="done__title">
-          {stars === 3 ? 'Perfect!' : stars === 2 ? 'Great job!' : 'Well done!'}
+          {failed
+            ? 'Almost!'
+            : stars === 3
+              ? 'Perfect!'
+              : stars === 2
+                ? 'Great job!'
+                : practice
+                  ? 'Nice practice!'
+                  : 'Well done!'}
         </h1>
+        {level ? (
+          <p className="done__level">
+            {failed ? `Level ${level.n}: try it again` : `Level ${level.n} passed`}
+          </p>
+        ) : null}
         <p className="done__line">
           Right first time: {correct} of {total}
         </p>
 
         <div className="done__nuts">
-          {collapsed ? (
-            <span className="done__nut done__nut--sum">🌰 ×{award.total}</span>
+          {award.total === 0 ? (
+            <span className="done__nut done__nut--none">{failed ? '🪙 next time' : '🪙 levels pay coins'}</span>
+          ) : collapsed ? (
+            <span className="done__nut done__nut--sum">🪙 ×{award.total}</span>
           ) : (
             visible.map((drop, i) => (
               <span key={i} className="done__nut">
@@ -139,17 +157,17 @@ export function RoundEnd({
             ))
           )}
         </div>
-        <p className="done__purse">🌰 {purse}</p>
+        <p className="done__purse">🪙 {purse}</p>
 
         <div className="done__actions">
           {onNext ? (
             <Button size="lg" tone="primary" onPress={onNext}>
-              {nextLesson ? `▶︎ Next: ${nextLesson.title}` : '🗺️ Back to the path'}
+              {nextLevel ? `▶︎ Level ${nextLevel}` : '🗺️ Levels'}
             </Button>
           ) : null}
           {spendTarget ? (
             <Button size="lg" tone="amber" onPress={() => onTown(spendTarget)}>
-              🛒 Spend 🌰 {purse}
+              🛒 Spend 🪙 {purse}
             </Button>
           ) : (
             <Button size="lg" tone="mint" onPress={() => onTown()}>
@@ -157,7 +175,7 @@ export function RoundEnd({
             </Button>
           )}
           <Button size="lg" tone={onNext ? 'ghost' : 'primary'} onPress={onAgain}>
-            {onNext ? '↻ Again for more stars' : '▶︎ Again'}
+            {failed ? '↻ Try again' : onNext ? '↻ Again for more stars' : '▶︎ Again'}
           </Button>
           <Button size="md" tone="ghost" onPress={onHome}>
             🏠 Home

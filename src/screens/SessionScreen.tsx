@@ -25,9 +25,9 @@ import { nextPurchase } from '../engine/town'
 import { TUNING } from '../engine/tuning'
 import type { LetterId } from '../data/letters'
 import type { Profile, SlotId } from '../storage/schema'
-import { lessonInfo } from '../data/lessons'
+import { levelSpec } from '../data/levels'
 import { preload, roundClipIds } from '../audio/voice'
-import { nextLessonAfter, starsFor } from '../engine/path'
+import { coinsForLevel, isPassed, nextLevelAfter, starsFor, starsOf } from '../engine/levels'
 import './SessionScreen.css'
 
 const RENDERERS = {
@@ -51,12 +51,12 @@ interface SessionScreenProps {
   readonly modeIds?: readonly ModeId[]
   /** A letter the child chose to practise from its lot in the town. */
   readonly focus?: LetterId
-  /** A lesson on the path: its letters, games and words replace the free mix. */
-  readonly lesson?: string
+  /** A numbered level: its letters, games and words replace the free mix. */
+  readonly level?: number
   readonly onHome: () => void
   readonly onTown: (open?: { readonly letter: LetterId; readonly slot: SlotId }) => void
-  readonly onLesson: (lessonId: string) => void
-  readonly onPath: () => void
+  readonly onLevel: (n: number) => void
+  readonly onLevels: () => void
 }
 
 /**
@@ -69,15 +69,15 @@ interface SessionScreenProps {
 export function SessionScreen({
   modeIds,
   focus,
-  lesson: lessonId,
+  level,
   onHome,
   onTown,
-  onLesson,
-  onPath,
+  onLevel,
+  onLevels,
 }: SessionScreenProps) {
-  const { profile, recordAttempt, introduce, closeRound, finishLesson } = useGame()
-  const lesson = lessonId ? lessonInfo(lessonId) : null
-  const [stars, setStars] = useState(0)
+  const { profile, recordAttempt, introduce, closeRound, passLevel } = useGame()
+  const spec = level ? levelSpec(level) : null
+  const [outcome, setOutcome] = useState<{ passed: boolean; stars: number } | null>(null)
   const [queue, setQueue] = useState<readonly SessionItem[]>([])
   const [index, setIndex] = useState(0)
   const [marks, setMarks] = useState<readonly StepMark[]>([])
@@ -93,16 +93,18 @@ export function SessionScreen({
   const startRound = useCallback(() => {
     if (!profile) return
     const plan = buildSession(profile, Date.now(), {
-      modeIds: lesson ? lesson.modes : modeIds,
+      modeIds: spec ? spec.modes : modeIds,
       focus,
-      letters: lesson?.letters,
-      wordStages: lesson?.wordStages,
-      level: lesson?.level,
+      letters: spec?.letters,
+      wordStages: spec?.wordStages,
+      level: spec?.difficulty,
+      ungated: spec?.ungated,
       micAvailable: profile.settings.micEnabled && speechRecognitionSupported(),
       caseMode: profile.settings.caseMode,
       letterPool: profile.settings.letterPool,
-      difficulty: profile.settings.difficulty,
-      length: lesson ? lesson.length : TUNING.sessionLength,
+      // A level is as hard as it says; the setting only shapes practice.
+      difficulty: spec ? spec.difficulty : profile.settings.difficulty,
+      length: spec ? spec.length : TUNING.sessionLength,
     })
     setQueue(plan.items)
     setMarks(plan.items.map((_, i) => (i === 0 ? 'current' : 'pending')))
@@ -131,14 +133,18 @@ export function SessionScreen({
       items: queue.length,
       correct: stats.current.correct,
       letters: [...stats.current.letters],
-      firstLesson: lesson ? !(start.path[lesson.id] > 0) : false,
     }
-    const earned = nutsForRound(start, after, facts, now)
+    // Coins come from levels only. A practice round keeps the gold-star beat
+    // but pays nothing; a failed level pays nothing either and stays current.
+    const passed = spec ? isPassed(facts.correct, facts.items) : false
+    const stars = spec ? starsFor(facts.correct, facts.items) : 0
+    const levelCoins = spec && passed ? coinsForLevel(starsOf(start, spec.n), stars) : 0
+    const computed = nutsForRound(start, after, { ...facts, levelCoins }, now)
+    const earned = spec && passed ? computed : { ...computed, base: 0, bonuses: [], total: 0 }
     setAward(earned)
-    if (lesson) {
-      const got = starsFor(facts.correct, facts.items)
-      setStars(got)
-      finishLesson(lesson.id, got)
+    if (spec) {
+      setOutcome({ passed, stars })
+      if (passed) passLevel(spec.n, stars)
     }
     closeRound({
       items: facts.items,
@@ -148,7 +154,7 @@ export function SessionScreen({
       letters: facts.letters,
       nuts: earned.total,
     })
-  }, [queue.length, closeRound, finishLesson, lesson])
+  }, [queue.length, closeRound, passLevel, spec])
 
   const handleAttempt = useCallback(
     (attempt: Attempt) => {
@@ -205,7 +211,7 @@ export function SessionScreen({
   if (award) {
     // The purse has already been updated by closeRound by the time this renders.
     const target = nextPurchase(profile, Date.now())
-    const next = lesson ? nextLessonAfter(profile, lesson.id) : null
+    const next = spec ? nextLevelAfter(profile, spec.n) : null
     return (
       <RoundEnd
         award={award}
@@ -213,12 +219,12 @@ export function SessionScreen({
         total={queue.length}
         purse={profile.seeds}
         spendTarget={target}
-        stars={lesson ? stars : undefined}
-        nextLesson={next ? { id: next.id, title: next.title } : null}
+        level={spec && outcome ? { n: spec.n, ...outcome } : undefined}
+        nextLevel={next}
         onAgain={startRound}
         onHome={onHome}
         onTown={onTown}
-        onNext={lesson ? (next ? () => onLesson(next.id) : onPath) : undefined}
+        onNext={spec && outcome?.passed ? (next ? () => onLevel(next) : onLevels) : undefined}
       />
     )
   }
@@ -243,7 +249,12 @@ export function SessionScreen({
           </Button>
         }
         center={<SessionProgress marks={marks} />}
-        right={<span className="session__count">{title}</span>}
+        right={
+          <span className="session__count">
+            {spec ? `Level ${spec.n} · ` : ''}
+            {title}
+          </span>
+        }
       />
       {/* Keyed by position: every question gets a brand-new component, so no
           mode has to remember to reset its own state between items. */}

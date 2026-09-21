@@ -49,14 +49,12 @@ export function ExtrasSheet({ profile, onBuy, onClose }: ExtrasSheetProps) {
                   {extra.owned ? (
                     <span className="sheet__owned">✓</span>
                   ) : !extra.unlocked ? (
-                    <span className="sheet__ghosts" aria-label={`${extra.daysToGo} more days`}>
-                      {Array.from({ length: Math.min(extra.daysToGo, 8) }, (_, i) => (
-                        <span key={i}>▫️</span>
-                      ))}
+                    <span className="sheet__locked" aria-label={`${extra.levelsToGo} more levels`}>
+                      🚧 {extra.levelsToGo} more {extra.levelsToGo === 1 ? 'level' : 'levels'}
                     </span>
                   ) : (
                     <Button tone="amber" onPress={() => onBuy(extra.id)} disabled={!affordable}>
-                      🌰 {extra.price}
+                      🪙 {extra.price}
                     </Button>
                   )}
                 </span>

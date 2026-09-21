@@ -53,8 +53,13 @@ export interface BuildOptions {
   readonly letters?: readonly LetterId[]
   /** A lesson's own slice of the word list, bypassing the derived stage. */
   readonly wordStages?: readonly WordStage[]
-  /** A lesson's fixed level, when the setting is automatic. */
+  /** A level's fixed difficulty, overriding the setting. */
   readonly level?: Level
+  /**
+   * A reading level hands out its words whether or not the memory gates would:
+   * the climb already put the sounds before the words.
+   */
+  readonly ungated?: boolean
 }
 
 export interface SessionPlan {
@@ -177,7 +182,7 @@ export function availableModes(profile: Profile, options: BuildOptions): readonl
   // Reading opens once the first sound set is in. Before that a word is a
   // guaranteed failure dressed up as a lesson.
   const stage = readingStage(profile)
-  const readingOpen = stage !== 'sounds' || (options.wordStages?.length ?? 0) > 0
+  const readingOpen = stage !== 'sounds' || (options.wordStages?.length ?? 0) > 0 || options.ungated === true
   return pool
     .filter((mode) => options.micAvailable || !mode.needsMic)
     .filter((mode) => readingOpen || !READING_MODES.includes(mode.id))
@@ -194,12 +199,13 @@ function readableWith(
   modeId: ModeId,
   now: number,
   stages?: readonly WordStage[],
+  ungated = false,
 ): boolean {
-  if (cellRecall(profile, letter, 'sound', 'upper', now) < TUNING.reading.soundRecallToRead) {
+  if (!ungated && cellRecall(profile, letter, 'sound', 'upper', now) < TUNING.reading.soundRecallToRead) {
     return false
   }
   const picturesOnly = modeId !== 'buildWord'
-  return wordsForLetter(profile, now, { letter, picturesOnly, stages }).length > 0
+  return wordsForLetter(profile, now, { letter, picturesOnly, stages, ungated }).length > 0
 }
 
 /** The twin drill needs a known partner and both letters on their own feet. */
@@ -232,6 +238,7 @@ function modeForLetter(
   length: number,
   expert: boolean,
   stages?: readonly WordStage[],
+  ungated = false,
 ): ModeId | null {
   // A letter the child has never seen is introduced by recognising it, never
   // by being asked to say or write it. Meeting a glyph for the first time in a
@@ -239,7 +246,9 @@ function modeForLetter(
   // letter is still weak: production has to be earned.
   const eligible = modeIds.filter((id) => {
     if ((bucket === 'new' || bucket === 'weak') && DEMANDING.includes(id)) return false
-    if (READING_MODES.includes(id)) return bucket !== 'new' && readableWith(profile, letter, id, now, stages)
+    if (READING_MODES.includes(id)) {
+      return (ungated || bucket !== 'new') && readableWith(profile, letter, id, now, stages, ungated)
+    }
     if (id === 'twinLetters') return twinFor(profile, letter, now) !== null
     return true
   })
@@ -270,7 +279,8 @@ function modeForLetter(
   // round never turns entirely into words and the sound cells never go stale.
   const readingUsed = READING_MODES.reduce((sum, id) => sum + (used.get(id) ?? 0), 0)
   const readingShare = TUNING.reading.share[readingStage(profile)] ?? 0
-  const readingCap = Math.round(length * readingShare)
+  // A reading level is all about the words: no slice, the whole round.
+  const readingCap = ungated ? length : Math.round(length * readingShare)
 
   const scored = pool.map((id) => {
     const mode = MODES[id]
@@ -292,7 +302,7 @@ function modeForLetter(
     // A word is judged by the word's own recall, not the letter's sound cell:
     // a sound the child knows cold can still be a word never read.
     const readingScore = reading
-      ? Math.min(...wordsForLetter(profile, now, { letter, picturesOnly: id !== 'buildWord', stages })
+      ? Math.min(...wordsForLetter(profile, now, { letter, picturesOnly: id !== 'buildWord', stages, ungated })
           .slice(0, 3)
           .map((word) => wordBestRecall(profile, word, now)))
       : p
@@ -343,6 +353,7 @@ function buildCandidates(
       length,
       options.difficulty === 4,
       options.wordStages,
+      options.ungated,
     )
     if (!modeId) continue
     const mode = MODES[modeId]
@@ -558,7 +569,7 @@ export function buildSession(
   options: BuildOptions,
 ): SessionPlan {
   const modeIds = availableModes(profile, options)
-  // A lesson names its letters and introduces them itself; free play follows
+  // A level names its letters and introduces them itself; free play follows
   // the curriculum's pacing.
   const fresh = options.letters
     ? options.letters.filter((letter) => !profile.introduced.includes(letter))
@@ -646,11 +657,11 @@ export function buildSession(
     guard += 1
   }
 
-  // A lesson made of brand-new letters is the one place where a round of
+  // A level made of brand-new letters is the one place where a round of
   // first encounters is the point: the letters get met, then recognised
-  // among others, then typed and traced, all inside the same lesson.
+  // among others, then typed and traced, all inside the same level.
   if (options.letters && picked.length < length) {
-    picked.push(...lessonFollowUps(candidates, modeIds, length - picked.length))
+    picked.push(...levelFollowUps(candidates, modeIds, length - picked.length))
   }
 
   const arranged = firstMeetingFirst(
@@ -718,31 +729,37 @@ function firstMeetingFirst(ordered: readonly Candidate[]): readonly Candidate[] 
 }
 
 /**
- * Second and third meetings with the letters of a lesson. The first pass asks
+ * Second and third meetings with the letters of a level. The first pass asks
  * the child to pick the letter out among others; the second asks them to
- * produce it. Both cycle through the lesson's games in turn, so twelve items
+ * produce it. Both cycle through the level's games in turn, so twelve items
  * over four letters are three different questions per letter.
  */
-function lessonFollowUps(
+function levelFollowUps(
   candidates: readonly Candidate[],
   modeIds: readonly ModeId[],
   count: number,
 ): readonly Candidate[] {
   const fresh = candidates.filter((c) => c.bucket === 'new')
-  if (fresh.length === 0) return []
   const plain = (id: ModeId) => !READING_MODES.includes(id) && id !== 'twinLetters'
   const recognise = modeIds.filter((id) => plain(id) && !DEMANDING.includes(id) && !GENTLE.includes(id))
   const produce = modeIds.filter((id) => plain(id) && DEMANDING.includes(id))
-  const passes = [
-    recognise.length > 0 ? recognise : modeIds.filter(plain),
-    produce.length > 0 ? produce : recognise.length > 0 ? recognise : modeIds.filter(plain),
-  ]
+  const reading = modeIds.filter((id) => READING_MODES.includes(id))
+  // A reading level repeats its letters with the words rotating through the
+  // level's games; a letter level meets, recognises, then produces.
+  const passes: readonly (readonly ModeId[])[] =
+    fresh.length === 0 || (recognise.length === 0 && produce.length === 0)
+      ? [reading.length > 0 ? reading : candidates.map((c) => c.modeId)]
+      : [
+          recognise.length > 0 ? recognise : modeIds.filter(plain),
+          produce.length > 0 ? produce : recognise.length > 0 ? recognise : modeIds.filter(plain),
+        ]
+  const base = fresh.length > 0 && (recognise.length > 0 || produce.length > 0) ? fresh : candidates
   const out: Candidate[] = []
   let pass = 0
-  while (out.length < count && pass < 6) {
+  while (out.length < count && pass < 8) {
     const modes = passes[Math.min(pass, passes.length - 1)]
     if (modes.length === 0) break
-    fresh.forEach((candidate, index) => {
+    base.forEach((candidate, index) => {
       if (out.length >= count) return
       const modeId = modes[(index + pass) % modes.length]
       out.push({ ...candidate, modeId, skill: MODES[modeId].skill })
@@ -788,8 +805,9 @@ function readingFields(
 
   const continuantOnly = modeId === 'blendIt' && level <= 2
   const stages = options.wordStages
+  const ungated = options.ungated
   const pick = (position: GapPosition) =>
-    wordsForLetter(profile, now, { letter, position, picturesOnly, continuantOnly, stages }).find(
+    wordsForLetter(profile, now, { letter, position, picturesOnly, continuantOnly, stages, ungated }).find(
       (word) => !usedWords.has(word.id),
     )
   const word = pick(wanted) ?? pick('any')
@@ -801,7 +819,7 @@ function readingFields(
     fields.gapIndex = gapIndexFor(word, letter, wanted) ?? gapIndexFor(word, letter, 'any') ?? 0
   }
   if (modeId === 'readPick' || modeId === 'blendIt') {
-    const pool = wordsForLetter(profile, now, { letter, picturesOnly: true, stages }).concat(
+    const pool = wordsForLetter(profile, now, { letter, picturesOnly: true, stages, ungated }).concat(
       WORDS.filter(
         (w) => w.picture !== 'none' && (stages ? stages.includes(w.stage) : wordUnlocked(profile, w)),
       ),

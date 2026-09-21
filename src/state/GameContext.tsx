@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import type { ExtraId, Profile, ReadingLevel, Settings, SlotId, Store } from '../storage/schema'
+import type { ExtraId, Profile, Settings, SlotId, Store } from '../storage/schema'
 import { buyExtra as buyExtraItem, buyItem } from '../engine/town'
 import { newProfile } from '../storage/schema'
 import {
@@ -21,13 +21,12 @@ import {
 import type { Attempt } from '../modes/types'
 import {
   applyAttempt,
-  applySurvey,
   finishRound,
   introduceLetters,
   placeKnownLetters,
   type RoundResult,
 } from '../engine/apply'
-import { completeLesson } from '../engine/path'
+import { finishLevel, restartLevels, skipLevels } from '../engine/levels'
 import type { LetterId } from '../data/letters'
 import { setMuted } from '../audio/sfx'
 
@@ -43,10 +42,11 @@ interface GameValue {
   readonly introduce: (letters: readonly LetterId[]) => void
   /** Answer to "which letters does the child already know". */
   readonly placeKnown: (letters: readonly LetterId[]) => void
-  /** The whole onboarding survey: known letters and reading level. */
-  readonly survey: (letters: readonly LetterId[], level: ReadingLevel) => void
-  /** A lesson on the path was finished; stars only ever go up. */
-  readonly finishLesson: (id: string, stars: number) => void
+  /** A level was passed; stars only ever go up, the last one opens the town. */
+  readonly passLevel: (n: number, stars: number) => void
+  /** Parent-side: skip ahead, or start the climb over. */
+  readonly skipLevels: (count: number) => void
+  readonly restartLevels: () => void
   readonly closeRound: (result: RoundResult) => void
   /** Buys and places a Letter Town item. A refused purchase changes nothing. */
   readonly buy: (letter: LetterId, slot: SlotId) => void
@@ -128,9 +128,9 @@ export function GameProvider({ children }: { readonly children: ReactNode }) {
         patchProfile((current) => introduceLetters(current, letters)),
       placeKnown: (letters) =>
         patchProfile((current) => placeKnownLetters(current, letters, Date.now())),
-      survey: (letters, level) =>
-        patchProfile((current) => applySurvey(current, letters, level, Date.now())),
-      finishLesson: (id, stars) => patchProfile((current) => completeLesson(current, id, stars)),
+      passLevel: (n, stars) => patchProfile((current) => finishLevel(current, n, stars)),
+      skipLevels: (count) => patchProfile((current) => skipLevels(current, count)),
+      restartLevels: () => patchProfile((current) => restartLevels(current)),
       closeRound: (result) =>
         patchProfile((current) => finishRound(current, result, Date.now())),
       buy: (letter, slot) =>

@@ -84,16 +84,16 @@ export function LotSheet({ lot, onBuy, onPlay, onClose, highlight }: LotSheetPro
                     </span>
                   ) : slot.affordable ? (
                     <Button tone="amber" onPress={() => onBuy(lot.letter, item.slot)}>
-                      🌰 {item.price}
+                      🪙 {item.price}
                     </Button>
                   ) : (
                     <span className="sheet__short">
                       <Button tone="amber" onPress={() => {}} disabled>
-                        🌰 {item.price}
+                        🪙 {item.price}
                       </Button>
                       <span className="sheet__ghosts" aria-label={`${slot.shortBy} more`}>
                         {Array.from({ length: Math.min(slot.shortBy, 7) }, (_, i) => (
-                          <span key={i}>🌰</span>
+                          <span key={i}>🪙</span>
                         ))}
                       </span>
                     </span>

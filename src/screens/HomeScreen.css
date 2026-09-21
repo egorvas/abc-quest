@@ -185,3 +185,8 @@
   opacity: 0.5;
   box-shadow: none;
 }
+
+.home__stat--dim {
+  color: var(--ink-faint);
+  font-size: 14px;
+}

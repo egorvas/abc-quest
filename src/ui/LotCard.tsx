@@ -43,7 +43,7 @@ function SlotView({ slot, size, justBought }: {
   }
   return (
     <span className={`lot__ghost ${slot.unlocked && slot.affordable ? 'lot__ghost--live' : ''}`}>
-      {slot.unlocked ? `🌰 ${slot.item.price}` : '🚧'}
+      {slot.unlocked ? `🪙 ${slot.item.price}` : '🚧'}
     </span>
   )
 }

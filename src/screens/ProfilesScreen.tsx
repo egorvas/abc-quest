@@ -87,7 +87,7 @@ export function ProfilesScreen({ onDone, canCancel }: ProfilesScreenProps) {
               >
                 <span className="profiles__card-avatar">{item.avatar}</span>
                 <span className="profiles__card-name">{item.name}</span>
-                <span className="profiles__card-meta">🌰 {item.seeds}</span>
+                <span className="profiles__card-meta">🪙 {item.seeds}</span>
               </button>
               <button
                 type="button"

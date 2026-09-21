@@ -172,15 +172,26 @@ export const TUNING = {
       /** Any round, at this probability. Unscheduled on purpose. */
       surprise: 1,
       surpriseChance: 0.12,
-      /** Finishing a lesson on the path for the first time. */
-      lesson: 2,
     },
     /** The very first round can always buy something. */
     firstRoundFloor: 3,
-    /** Days played that open each town-wide extra. */
-    extraAt: { clouds: 2, sky: 5, tram: 9, night: 14, balloons: 20, fireworks: 28 },
+    /** Levels passed that open each town-wide extra. */
+    extraAt: { clouds: 5, sky: 12, tram: 20, night: 30, balloons: 42, fireworks: 55 },
     /** Share of a focused round given to the letter the child chose. */
     focusShare: 0.4,
+  },
+
+  /* ---- levels ---- */
+  levels: {
+    /** Right-first-time share needed to pass a level. */
+    passShare: 0.5,
+    twoStars: 0.7,
+    threeStars: 0.9,
+    /** Coins for a first pass, plus this much per star. */
+    firstPass: 4,
+    perStar: 2,
+    /** A replay that gains no star still pays a token. */
+    replay: 1,
   },
 
   /* ---- storage ---- */

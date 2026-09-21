@@ -9,38 +9,42 @@ backend: all progress lives in this browser's `localStorage`.
 Everything in the app is in English, including the interface. There is barely
 any text: a child who cannot read yet navigates by icons.
 
-## Two ways to play
+## Levels
 
-**The path** is the lesson sequence, Duolingo-style: seven units, twenty-nine
-lessons, one round each. Letters, then the sound of every letter, then sliding
-sounds into `s-u-n`, then reading and building short words, then two letters
-that make one sound (`sh`, `ch`, `ck`), then two-syllable words joined by
-parts, then a final unit that mixes everything and climbs to the expert level.
-A lesson is passed the moment it is finished; the stars say how cleanly (90%
-right first time for three), and replaying can only raise them. The next
-lesson unlocks when the current one is done. The home screen always shows the
-next lesson and the progress along the path.
+Sixty numbered levels, each one round, each harder than the last. Level 1 is
+three letters and two easy games; level 60 is expert reading. Passing a level
+is the only thing that opens the next, and what is behind a door is not
+written on it: the games change from level to level and the child finds out
+by opening it. Seven tiers give the climb its shape:
 
-**The games** are free play: any single game, or a mixed round, with the
-scheduler still choosing the letters and words the child needs most. Reading
-games unlock once the first sounds are in.
+| Levels | Tier | What it asks |
+|---|---|---|
+| 1–12 | Letters | meet the alphabet, three to two letters at a time, recognise then type and trace |
+| 13–18 | Sounds | the sound every letter makes |
+| 19–26 | Blending | slide sounds into `s-u-n`, fill the missing letter, pick the picture |
+| 27–36 | Words | read and build short words, harder options each level |
+| 37–42 | Two letters, one sound | `sh`, `ch`, `ck`, `ng` |
+| 43–48 | Syllables | two-part words joined by parts: `rab-bit` |
+| 49–60 | Master reader | everything mixed, expert difficulty |
 
-Both feed the same memory model, and both pay in nuts for Letter Town.
+A level is passed with at least half the answers right first time; below
+that it says "Almost!" and asks to be tried again. Stars (1 to 3 at 50 / 70 /
+90%) are never taken away, and replaying can only raise them. A first pass
+pays 4 coins plus 2 per star; a replay pays 2 per new star, or 1. Passing all
+sixty opens the whole of Letter Town at once.
 
-### The survey
+The recipe of a level is derived from its number with a seeded generator, so
+it is the same on every device and every replay. A parent can skip ahead from
+the grown-ups screen; skipped levels count as passed with one star and pay
+nothing.
 
-A new profile is asked two questions before the first lesson: which letters
-the child already knows, and how they read (not yet, letter by letter, short
-words, longer words, sentences). The answers set where the path starts. Known
-letters pass the letter and sound lessons they cover; the reading level passes
-whole units below it. Passed lessons get one star, not three: they were
-vouched for, not earned, and stay open to replay. The survey can be redone from
-the grown-ups screen.
+**Practice** is the playground next to the levels: any single game, or a
+mixed round chosen by the memory model. It pays no coins.
 
 ## Games
 
 Thirteen of them, across four memory channels, plus the reading games described
-further down.
+further down. Levels draw from these; practice offers them one at a time.
 
 | Game | What the child does | Skill |
 |---|---|---|
@@ -55,10 +59,9 @@ further down.
 
 ## Starting from where the child actually is
 
-The first screen asks which letters are already known. Without it, a child who
-knows twenty letters would spend weeks being taught them again, one per
-session, before the app ever reached the six they actually need. Ticked letters
-start as easy wins, so the very first round goes straight to the gaps.
+The grown-ups screen asks which letters are already known. Ticked letters start
+as easy wins in practice rounds, so a mixed round goes straight to the gaps;
+on the levels, skipping ahead is the equivalent.
 
 A parent's estimate is not proof, so the head start stops short of solid: a
 ticked letter still has to hold up in the game before it can earn a star.
@@ -207,14 +210,14 @@ Three horizons rather than confetti on every answer:
 1. **The letter's note** on every answer. Pitch follows the position in the
    alphabet, `A` low and `Z` high, on a pentatonic scale so nothing can sound
    wrong.
-2. **Nuts** at the end of a round: one burst of confetti, one to three nuts for
+2. **Coins** at the end of a round: one burst of confetti, one to three coins for
    accuracy, and itemised bonuses that drop in with their own icon so a child
    who cannot read learns what earns what: ⭐ +7 for a letter that went gold
    during the round, ✍️ +3 the first time a letter is written or typed
    unaided, 👋 +2 for coming back after a few days away, ☀️ +1 on the first
    round of a day, 🎁 +1 at random. The very first round always pays at least
    3, the price of the cheapest thing in the town.
-3. **Letter Town**, where the nuts go.
+3. **Letter Town**, where the coins go.
 
 ### Letter Town
 
@@ -225,7 +228,7 @@ is a building or landmark (Bridge, Castle, Volcano), the friend is a creature
 that bobs (Bear, Dolphin, Unicorn). Price order is gate order: the front opens
 when the letter is introduced and costs 3, the back needs the letter's garden
 bed to flower and costs 5, the friend needs the gold star and costs 7, which is
-exactly what the star pays. Mastering a letter hands the child the nuts for
+exactly what the star pays. Mastering a letter hands the child the coins for
 the one creature that only mastery unlocks.
 
 There is no shop screen. Tapping a lot opens that lot; tapping a price buys the
@@ -235,11 +238,11 @@ thing the child can buy, so it is one tap from finishing a round to owning
 something.
 
 Six town-wide extras (clouds, a sky that follows the real time of day, a tram,
-night mode, balloons, fireworks on tap) are gated on days played rather than on
-letters, at 10 nuts each.
+night mode, balloons, fireworks on tap) are gated on levels passed rather than on
+letters, at 10 coins each.
 
 Nothing in the town can ever be lost, sold or moved. The purse goes down when
-the child buys, but a second counter of nuts ever earned only climbs, and every
+the child buys, but a second counter of coins ever earned only climbs, and every
 gold star flies a lettered balloon over its lot forever. The child never sees a
 completion count; the parent screen shows it. One lot on the street breathes
 slowly, the weakest letter with something still to buy, and inside any lot
@@ -250,7 +253,7 @@ The garden still exists inside each lot as the plant that grows on its own from
 memory strength. It never wilts and asks for nothing while the child is away.
 The stepping-stone path only grows longer, so a missed day is not an event.
 
-In the simulation a child who knows twenty letters earns about 380 nuts in
+In the simulation a child who knows twenty letters earns about 380 coins in
 three weeks and finishes 76 of the 78 items; finishing the alphabet and
 finishing the town land within days of each other.
 
@@ -300,7 +303,7 @@ npm run dev          # http://localhost:5173/abc-quest/
 npm run build
 npm run deploy       # build, then push to the gh-pages branch
 npm run simulate     # run the engine against a synthetic child
-npx tsx scripts/dev/path-check.ts   # print the rounds each lesson would build
+npx tsx scripts/dev/levels-check.ts # play all 60 levels once and print each round
 ```
 
 `simulate` plays the app with no browser and prints the learning curve. It
