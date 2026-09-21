@@ -281,6 +281,17 @@ extra is stored to produce the dashboard.
   Add the page to the home screen and use "Save a copy" in the grown-ups
   section.
 
+## Voice
+
+Every line the app says is a prerecorded clip: 801 MP3s, 3.8 MB, generated
+by `npm run voice` with Kokoro-82M (Apache-2.0) and committed under
+`public/voice`. Letter names are written as explicit IPA so `Z` is never "C"
+and `L` is never "oh"; isolated consonants are cut before the vowel the model
+wants to add, so `/b/` stays a `/b/` and blending can be heard. Clips play
+through Web Audio on the same context as the sound effects, never through an
+`<audio>` element (which breaks the next speech recognition on iOS), and
+anything without a clip falls back to the device's speech synthesis.
+
 ## Development
 
 ```bash

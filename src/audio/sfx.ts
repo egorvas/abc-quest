@@ -38,6 +38,12 @@ function audioContext(): AudioContext | null {
   }
 }
 
+/** The shared context and master gain, for the voice module. */
+export function audioNodes(): { readonly ctx: AudioContext; readonly master: GainNode } | null {
+  const ac = audioContext()
+  return ac && master ? { ctx: ac, master } : null
+}
+
 /** Call from a user gesture. Safe to call repeatedly. */
 export function unlockAudio(): void {
   const ac = audioContext()

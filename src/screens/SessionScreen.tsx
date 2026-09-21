@@ -26,6 +26,7 @@ import { TUNING } from '../engine/tuning'
 import type { LetterId } from '../data/letters'
 import type { Profile, SlotId } from '../storage/schema'
 import { lessonInfo } from '../data/lessons'
+import { preload, roundClipIds } from '../audio/voice'
 import { nextLessonAfter, starsFor } from '../engine/path'
 import './SessionScreen.css'
 
@@ -111,6 +112,7 @@ export function SessionScreen({
     startedAt.current = Date.now()
     before.current = profile
     if (plan.introduced.length > 0) introduce(plan.introduced)
+    void preload(roundClipIds([...new Set(plan.items.map((item) => item.letter))]))
     // The plan is a snapshot: rebuilding mid-round would change the questions
     // under the child's finger.
     // eslint-disable-next-line react-hooks/exhaustive-deps

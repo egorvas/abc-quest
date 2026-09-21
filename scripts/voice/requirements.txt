@@ -1,0 +1,18 @@
+# Pinned build environment for `npm run voice`.
+#
+# Created by scripts/generate-voice.ts with `uv venv --python 3.12`, so it
+# never touches the system interpreter. Python 3.12 rather than 3.14 only
+# because onnxruntime publishes its widest set of wheels there; 3.14 also
+# works today and can be bumped once the pins below are re-verified.
+#
+# Licences, since generated audio is committed to a public repo:
+#   kokoro-onnx     MIT
+#   Kokoro-82M      Apache-2.0   (the weights; hexgrad/Kokoro-82M)
+#   espeakng-loader MIT          (bundles espeak-ng, GPL-3.0, used as a tool)
+#   onnxruntime     MIT
+# None of them place any condition on the audio they produce.
+kokoro-onnx==0.6.1
+onnxruntime==1.30.0
+numpy==2.5.3
+espeakng-loader==0.2.4
+phonemizer==3.4.0

@@ -1,59 +1,26 @@
 import type { LetterId } from '../data/letters'
-import { letterInfo } from '../data/letters'
-import { graphemeDefault, graphemeInfo, type Phoneme } from '../data/phonics'
+import { letterInfo, isLetterId } from '../data/letters'
+import { GRAPHEMES, graphemeDefault, graphemeInfo, type Phoneme } from '../data/phonics'
 import { WORD_BY_ID, type WordEntry } from '../data/words'
+import {
+  isSpeaking as clipIsSpeaking,
+  say,
+  speakLetterSound,
+  stopSpeaking as stopClips,
+  unlockVoice,
+} from './voice'
 
 /**
- * Text to speech, written around what WebKit actually does rather than what
- * the spec says.
+ * Everything the app says, by meaning rather than by text.
  *
- * The rules that shaped this file:
- *  - iOS arms an autoplay restriction per document; the first `speak()` has to
- *    happen inside a real gesture, and a blocked call returns silently with no
- *    error. Every visit therefore needs a warm-up on first touch.
- *  - Warming up with empty text wedges the queue forever, because the queue
- *    only advances when an utterance reports completion and an empty one never
- *    does. The warm-up says "." at near-zero volume instead.
- *  - `cancel()` followed by `speak()` in the same tick plays the new utterance
- *    but never fires its events, so a short gap is left between the two.
- *  - SSML is read out loud verbatim, so text must never contain angle brackets.
- *  - With no `lang` and no voice, WebKit falls back to the *device* language:
- *    English text in a Russian voice. `lang` is always set.
+ * Each call resolves to a prerecorded clip when one exists and to
+ * speechSynthesis when it does not, so a new word in words.ts is audible
+ * before its audio has been generated. The call sites still pass the sentence
+ * they mean; this file is where a sentence becomes a clip id.
  */
 
-const PREFERRED_URI_FRAGMENTS = ['en-US.Samantha', 'en-GB.Daniel', 'en-US.Alex']
-
-let preferred: SpeechSynthesisVoice | null = null
-let warmed = false
-let speakingUntil = 0
-
-function refreshVoices(): void {
-  if (!ttsSupported()) return
-  const voices = window.speechSynthesis.getVoices()
-  if (voices.length === 0) return
-  const english = voices.filter((v) => /^en([-_]|$)/i.test(v.lang))
-  // Match on voiceURI: names are localised and not stable across devices.
-  const byUri = english.find((v) =>
-    PREFERRED_URI_FRAGMENTS.some((fragment) => v.voiceURI.includes(fragment)),
-  )
-  const us = english.find((v) => /^en[-_]US/i.test(v.lang))
-  preferred = byUri ?? us ?? english[0] ?? null
-}
-
-if ('speechSynthesis' in window) {
-  // Safari usually returns the list synchronously, but newer builds moved to an
-  // async fetch, so both paths are covered.
-  refreshVoices()
-  window.speechSynthesis.addEventListener('voiceschanged', refreshVoices)
-  if (!preferred) {
-    let tries = 0
-    const poll = window.setInterval(() => {
-      refreshVoices()
-      tries += 1
-      if (preferred || tries > 12) window.clearInterval(poll)
-    }, 150)
-  }
-}
+/** Natural tempo is 1; the clips are slowed at playback, never at synthesis. */
+const CHILD_RATE = 0.9
 
 export function ttsSupported(): boolean {
   return 'speechSynthesis' in window
@@ -61,95 +28,84 @@ export function ttsSupported(): boolean {
 
 /** Must run inside a user gesture. Safe to call repeatedly. */
 export function warmUpSpeech(): void {
-  if (warmed || !ttsSupported()) return
-  warmed = true
-  try {
-    const u = new SpeechSynthesisUtterance('.')
-    u.lang = 'en-US'
-    u.volume = 0.01
-    u.rate = 2
-    window.speechSynthesis.speak(u)
-    refreshVoices()
-  } catch {
-    /* best effort */
-  }
+  unlockVoice()
 }
 
-/** True while an utterance is expected to still be playing. */
 export function isSpeaking(): boolean {
-  return Date.now() < speakingUntil
+  return clipIsSpeaking()
 }
 
-/** Stops everything. Recognition and synthesis must never overlap on iOS. */
+/** Stops everything, including what was queued. Recognition must never overlap. */
 export function stopSpeaking(): void {
-  if (!ttsSupported()) return
-  try {
-    window.speechSynthesis.cancel()
-  } catch {
-    /* ignore */
-  }
-  speakingUntil = 0
+  stopClips()
 }
 
 export interface SpeakOptions {
-  /** 0.4-0.8 is the comfortable range for a child on iOS. */
+  /** Synthesis rate; clips ignore it and play at the child tempo. */
   readonly rate?: number
   readonly pitch?: number
 }
 
-export function speak(text: string, options: SpeakOptions = {}): Promise<void> {
-  if (!ttsSupported()) return Promise.resolve()
-  // Angle brackets would be read out character by character.
-  const clean = text.replace(/[<>]/g, ' ').trim()
-  if (!clean) return Promise.resolve()
-
-  const synth = window.speechSynthesis
-  try {
-    synth.cancel()
-  } catch {
-    /* ignore */
-  }
-
-  const estimate = 500 + clean.length * 110
-  speakingUntil = Date.now() + estimate
-
-  return new Promise<void>((resolve) => {
-    // The gap is what makes onend fire at all after a cancel().
-    window.setTimeout(() => {
-      try {
-        const u = new SpeechSynthesisUtterance(clean)
-        u.lang = preferred?.lang ?? 'en-US'
-        if (preferred) u.voice = preferred
-        u.rate = options.rate ?? 0.8
-        u.pitch = options.pitch ?? 1.1
-        let settled = false
-        const done = () => {
-          if (settled) return
-          settled = true
-          speakingUntil = Math.min(speakingUntil, Date.now())
-          resolve()
-        }
-        u.onend = done
-        u.onerror = done
-        // Safari drops onend often enough that a watchdog is mandatory.
-        window.setTimeout(done, estimate)
-        synth.speak(u)
-      } catch {
-        resolve()
-      }
-    }, 70)
-  })
+const LINE_CLIPS: Readonly<Record<string, string>> = {
+  'What letter is this?': 'ask/whatletter',
+  'Which one is this?': 'ask/whichone',
+  'What word is this?': 'ask/whatword',
+  'Try again!': 'hint/tryagain',
+  'Nice!': 'praise/nice',
+  'Well done!': 'praise/welldone',
+  'You did it!': 'praise/youdidit',
+  'Great job!': 'praise/great',
+  'b has its tummy at the back. d has its tummy at the front.': 'twin/bd',
+  'p has its ball on the right. q has its ball on the left.': 'twin/pq',
+  'M points down. W points up.': 'twin/mw',
+  'G is a C with a little shelf.': 'twin/cg',
+  'U is round at the bottom. V is pointy.': 'twin/uv',
+  'E has three arms. F has two.': 'twin/ef',
 }
 
-/**
- * Says a single letter.
- *
- * A bare lowercase character is read as the letter's name by Apple's voices.
- * Respelled names ("ef", "aitch") are unreliable: the engine sometimes spells
- * them out instead of pronouncing them.
- */
+const SENTENCE_PATTERNS: readonly (readonly [RegExp, string])[] = [
+  [/^Find all the letters?, ([a-z])$/i, 'findall'],
+  [/^Find the letter, ([a-z])$/i, 'find'],
+  [/^Type the letter, ([a-z])$/i, 'type'],
+  [/^Trace the letter, ([a-z])$/i, 'trace'],
+  [/^([a-z])\. \1 for .+$/i, 'traced'],
+  [/^([a-z]) for .+$/i, 'isfor'],
+  [/^([a-z]) and \1\. The same letter$/i, 'same'],
+]
+
+/** The clip that says this line, if the inventory has one. */
+function clipForText(text: string): string | null {
+  const line = LINE_CLIPS[text]
+  if (line) return line
+  for (const [pattern, id] of SENTENCE_PATTERNS) {
+    const match = text.match(pattern)
+    if (!match) continue
+    const letter = match[1].toUpperCase()
+    if (isLetterId(letter)) return `say/${id}/${letter}`
+  }
+  const sound = GRAPHEMES.find((g) => g.say === text)
+  if (sound) return `sound/${sound.clip}`
+  const lower = text.toLowerCase()
+  if (WORD_BY_ID.has(lower)) return `read/word/${lower}`
+  // A bare grapheme is its sound: BlendIt shows "b" and means /b/, not "bee".
+  const grapheme = graphemeDefault(lower)
+  if (grapheme && lower.length <= 2) return `sound/${grapheme.clip}`
+  if (/^[a-z]{2,4}$/.test(lower)) return `read/syl/${lower}`
+  return null
+}
+
+export function speak(text: string, options: SpeakOptions = {}): Promise<void> {
+  const clean = text.trim()
+  if (!clean) return Promise.resolve()
+  const id = clipForText(clean) ?? `text/${clean}`
+  return say(id, { rate: CHILD_RATE, fallback: clean, ...(options.rate ? { synthRate: options.rate } : {}) })
+}
+
+/** Says a single letter's name: "bee", never the glyph spelled out. */
 export function speakLetterName(letter: LetterId): Promise<void> {
-  return speak(letterInfo(letter).lower, { rate: 0.7, pitch: 1.15 })
+  // A bare lowercase character is the one spelling Apple's voices read as a
+  // name, so it stays the fallback.
+  return say(`name/${letter}`, { rate: CHILD_RATE, fallback: letterInfo(letter).lower })
 }
 
 /** A letter inside a sentence needs the carrier phrase to be read as a name. */
@@ -160,18 +116,21 @@ export function letterInSentence(letter: LetterId): string {
 /**
  * Says a sound, not a name.
  *
- * Continuants have an honest respelling ("mmm", "sss"). A stop has none: any
- * attempt to voice /b/ alone produces "buh", and that schwa is exactly the
- * habit that stops "b-a-t" from ever becoming "bat". So a stop is only ever
- * spoken attached to the vowel that follows it in the word, and when there is
- * no word to attach it to, the whole example word is said instead.
+ * The clip of a stop is a /b/ with its vowel cut off. Without a clip, a
+ * continuant has an honest respelling ("mmm"); a stop has none - any attempt
+ * to voice /b/ alone produces "buh" - so the example word is said instead.
  */
 export function speakSound(g: string, context?: string): Promise<void> {
   const info = graphemeDefault(g)
   if (!info) return speak(g)
-  if (info.say) return speak(info.say, { rate: 0.55, pitch: 1.05 })
-  if (context) return speak(context, { rate: 0.6 })
-  return speak(info.example, { rate: 0.6 })
+  const upper = g.toUpperCase()
+  if (g.length === 1 && isLetterId(upper)) {
+    return speakLetterSound(upper, {
+      rate: CHILD_RATE,
+      fallback: info.say ?? context ?? info.example,
+    })
+  }
+  return say(`sound/${info.clip}`, { rate: CHILD_RATE, fallback: info.say ?? context ?? info.example })
 }
 
 /** Stretches a word out so the sounds run into each other with no gaps. */
@@ -185,15 +144,17 @@ export function blendText(word: WordEntry): string {
 }
 
 /**
- * The blend, as one utterance spanning the whole motion: silence in the
- * middle is the very error being corrected, so it is never two calls.
+ * The blend, then the word. The clip spans the whole motion in one breath:
+ * silence in the middle is the very error being corrected.
  */
 export function speakBlend(word: WordEntry): Promise<void> {
-  return speak(`${blendText(word)}. ${word.text}`, { rate: 0.5 })
+  return say(`read/blend/${word.id}`, { rate: CHILD_RATE, fallback: blendText(word) }).then(() =>
+    speakWord(word),
+  )
 }
 
 export function speakWord(word: WordEntry): Promise<void> {
-  return speak(word.text, { rate: 0.75 })
+  return say(`read/word/${word.id}`, { rate: CHILD_RATE, fallback: word.text })
 }
 
 /**
