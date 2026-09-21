@@ -32,10 +32,18 @@ interface Part {
   readonly say: string
 }
 
-function partsFor(word: WordEntry, successive: boolean): readonly Part[] {
+function partsFor(
+  word: WordEntry,
+  successive: boolean,
+  segmentation: 'onsetRime' | 'phoneme' | 'syllable' | undefined,
+): readonly Part[] {
   const sayUnit = (g: string, p: WordEntry['units'][number]['p']) => {
     const info = graphemeInfo(g, p)
     return info.continuant && info.say ? info.say : g
+  }
+  // A longer word is joined by syllables: "rab" and "bit", not six sounds.
+  if (segmentation === 'syllable' && word.syllables.length > 1) {
+    return word.syllables.map((syllable) => ({ text: syllable, say: syllable }))
   }
   if (!successive || word.units.length <= 2) {
     const [first, ...rest] = word.units
@@ -51,7 +59,7 @@ export function BlendIt({ item, onDone, seq }: ModeProps) {
   const tracker = useAttempt(item, seq, onDone)
   const word = wordInfo(item.wordId ?? 'man')
   const successive = item.level >= 3
-  const [parts, setParts] = useState<readonly Part[]>(() => partsFor(word, successive))
+  const [parts, setParts] = useState<readonly Part[]>(() => partsFor(word, successive, item.segmentation))
   const [joining, setJoining] = useState(false)
   const [pulse, setPulse] = useState<number | null>(null)
   const [blended, setBlended] = useState(false)

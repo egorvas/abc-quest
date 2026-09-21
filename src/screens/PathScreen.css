@@ -1,0 +1,173 @@
+.path__title {
+  font-size: 19px;
+}
+
+.path__progress {
+  font-size: 16px;
+  padding: 8px 14px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  white-space: nowrap;
+}
+
+.path__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px 0 40px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.path__unit {
+  padding: 10px 6px 6px;
+}
+
+.path__unit-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--surface-solid);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.path__unit--done .path__unit-head {
+  opacity: 0.75;
+}
+
+.path__unit-emoji {
+  font-size: 34px;
+  line-height: 1;
+}
+
+.path__unit-title {
+  margin: 0;
+  font-size: 19px;
+}
+
+.path__unit-blurb {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-faint);
+}
+
+.path__lessons {
+  list-style: none;
+  margin: 0;
+  padding: 10px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.path__step {
+  display: flex;
+}
+
+/* A gentle zig-zag, so the list reads as a trail rather than a table. */
+.path__step--0 { justify-content: flex-start; padding-left: 8%; }
+.path__step--1 { justify-content: center; }
+.path__step--2 { justify-content: flex-end; padding-right: 8%; }
+.path__step--3 { justify-content: center; }
+
+.path__node {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  grid-template-areas:
+    'face title stars'
+    'face games stars';
+  align-items: center;
+  column-gap: 12px;
+  width: min(100%, 360px);
+  padding: 10px 14px;
+  border-radius: var(--r-lg);
+  border: 3px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.24);
+  text-align: left;
+  transition: transform 0.12s ease;
+}
+
+.path__node:active {
+  transform: scale(0.96);
+}
+
+.path__node--done {
+  background: linear-gradient(165deg, rgba(52, 211, 153, 0.4), rgba(5, 150, 105, 0.3));
+  border-color: rgba(167, 243, 208, 0.7);
+}
+
+.path__node--current {
+  background: linear-gradient(165deg, rgba(251, 191, 36, 0.55), rgba(245, 158, 11, 0.35));
+  border-color: #fde68a;
+  animation: path-glow 1.6s ease-in-out infinite alternate;
+}
+
+.path__node--locked {
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+@keyframes path-glow {
+  from { box-shadow: 0 6px 0 rgba(0, 0, 0, 0.24), 0 0 0 0 rgba(253, 230, 138, 0.5); }
+  to { box-shadow: 0 6px 0 rgba(0, 0, 0, 0.24), 0 0 0 10px rgba(253, 230, 138, 0); }
+}
+
+.path__node-face {
+  grid-area: face;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.22);
+  font-size: 26px;
+}
+
+.path__node-title {
+  grid-area: title;
+  font-family: var(--font-letter);
+  font-size: 22px;
+  line-height: 1.1;
+  letter-spacing: 0.08em;
+}
+
+.path__node-games {
+  grid-area: games;
+  font-size: 15px;
+  opacity: 0.9;
+}
+
+.path__stars {
+  grid-area: stars;
+  display: flex;
+  gap: 2px;
+  font-size: 20px;
+}
+
+.path__star {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.path__star--on {
+  color: #fde68a;
+  text-shadow: 0 0 8px rgba(253, 230, 138, 0.7);
+}
+
+.path__end {
+  text-align: center;
+  color: var(--ink-faint);
+  font-weight: 600;
+  padding: 20px 0;
+}

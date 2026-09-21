@@ -16,7 +16,7 @@ import { TUNING } from './tuning'
  * Pure. `now` and `rand` are injected so the simulator stays deterministic.
  */
 
-export type BonusKind = 'star' | 'firstWrite' | 'welcomeBack' | 'newDay' | 'surprise'
+export type BonusKind = 'star' | 'firstWrite' | 'welcomeBack' | 'newDay' | 'surprise' | 'lesson'
 
 export interface NutBonus {
   readonly kind: BonusKind
@@ -39,12 +39,15 @@ export const BONUS_ICON: Readonly<Record<BonusKind, string>> = {
   welcomeBack: '👋',
   newDay: '☀️',
   surprise: '🎁',
+  lesson: '🎯',
 }
 
 interface RoundFacts {
   readonly correct: number
   readonly items: number
   readonly letters: readonly LetterId[]
+  /** A lesson on the path finished for the first time. */
+  readonly firstLesson?: boolean
 }
 
 export function nutsForRound(
@@ -91,6 +94,7 @@ export function nutsForRound(
   if (rand() < bonus.surpriseChance) {
     bonuses.push({ kind: 'surprise', nuts: bonus.surprise })
   }
+  if (round.firstLesson) bonuses.push({ kind: 'lesson', nuts: bonus.lesson })
 
   const base = seedsForRound(round.correct, round.items)
   const raw = base + bonuses.reduce((sum, b) => sum + b.nuts, 0)

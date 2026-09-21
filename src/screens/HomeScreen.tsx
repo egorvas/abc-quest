@@ -2,24 +2,26 @@ import { useMemo } from 'react'
 import { useGame } from '../state/GameContext'
 import { Screen, TopBar } from '../ui/Screen'
 import { Button } from '../ui/Button'
-import { MODE_LIST } from '../modes/registry'
-import type { ModeId } from '../modes/types'
-import { speechRecognitionSupported } from '../speech/recognizer'
 import { LETTER_IDS } from '../data/letters'
 import { allStatuses, masteredCount } from '../engine/mastery'
+import { currentLesson, pathProgress } from '../engine/path'
+import { UNITS } from '../data/lessons'
 import './HomeScreen.css'
 
 interface HomeScreenProps {
-  readonly onPlay: () => void
-  readonly onPickMode: (modeId: ModeId) => void
+  /** Straight into the current lesson on the path. */
+  readonly onLearn: (lessonId: string) => void
+  readonly onPath: () => void
+  readonly onGames: () => void
   readonly onTown: () => void
   readonly onParents: () => void
   readonly onProfiles: () => void
 }
 
 export function HomeScreen({
-  onPlay,
-  onPickMode,
+  onLearn,
+  onPath,
+  onGames,
   onTown,
   onParents,
   onProfiles,
@@ -30,11 +32,15 @@ export function HomeScreen({
     if (!profile) return 0
     return masteredCount(allStatuses(profile, LETTER_IDS, Date.now()))
   }, [profile])
+  const lesson = useMemo(() => (profile ? currentLesson(profile) : null), [profile])
+  const progress = useMemo(
+    () => (profile ? pathProgress(profile) : { done: 0, total: 0 }),
+    [profile],
+  )
 
   if (!profile) return null
 
-  const micOk = profile.settings.micEnabled && speechRecognitionSupported()
-  const modes = MODE_LIST.filter((mode) => micOk || !mode.needsMic)
+  const unit = lesson ? UNITS.find((u) => u.id === lesson.unit) : null
 
   return (
     <Screen className="home">
@@ -59,29 +65,36 @@ export function HomeScreen({
       <div className="home__body">
         <h1 className="home__title">ABC Quest</h1>
 
+        <button type="button" className="home__lesson" onClick={() => lesson ? onLearn(lesson.id) : onPath()}>
+          <span className="home__lesson-emoji">{unit?.emoji ?? '🏆'}</span>
+          <span className="home__lesson-text">
+            <span className="home__lesson-kicker">
+              {lesson ? `Next lesson · ${unit?.title ?? ''}` : 'Path complete'}
+            </span>
+            <span className="home__lesson-title">
+              {lesson ? lesson.title : 'Replay any lesson for more stars'}
+            </span>
+          </span>
+          <span className="home__lesson-go">▶︎</span>
+        </button>
+
+        <div className="home__bar" aria-label={`${progress.done} of ${progress.total} lessons done`}>
+          <span
+            className="home__bar-fill"
+            style={{ width: `${progress.total ? (100 * progress.done) / progress.total : 0}%` }}
+          />
+        </div>
+
         <div className="home__cta">
-          <Button onPress={onPlay} size="lg" tone="primary">
-            ▶︎ Play
+          <Button onPress={onPath} size="lg" tone="amber">
+            🗺️ Path
+          </Button>
+          <Button onPress={onGames} size="lg" tone="primary">
+            🎲 Games
           </Button>
           <Button onPress={onTown} size="lg" tone="mint">
             🏙️ My town
           </Button>
-        </div>
-
-        <p className="home__section">Pick a game</p>
-        <div className="home__modes">
-          {modes.map((mode) => (
-            <button
-              key={mode.id}
-              type="button"
-              className="home__mode"
-              onClick={() => onPickMode(mode.id)}
-            >
-              <span className="home__mode-emoji">{mode.emoji}</span>
-              <span className="home__mode-title">{mode.title}</span>
-              <span className="home__mode-blurb">{mode.blurb}</span>
-            </button>
-          ))}
         </div>
       </div>
     </Screen>

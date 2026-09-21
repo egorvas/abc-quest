@@ -172,6 +172,8 @@ export const TUNING = {
       /** Any round, at this probability. Unscheduled on purpose. */
       surprise: 1,
       surpriseChance: 0.12,
+      /** Finishing a lesson on the path for the first time. */
+      lesson: 2,
     },
     /** The very first round can always buy something. */
     firstRoundFloor: 3,

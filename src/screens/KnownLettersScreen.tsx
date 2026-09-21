@@ -9,10 +9,15 @@ import { playLetterNote } from '../audio/letterNote'
 import './KnownLettersScreen.css'
 
 interface KnownLettersScreenProps {
-  readonly onDone: () => void
+  /** Receives the ticked letters. The screen itself records them unless `commit` is off. */
+  readonly onDone: (known: readonly LetterId[]) => void
   readonly onSkip: () => void
   /** First run has nothing to go back to. */
   readonly firstRun: boolean
+  /** Off inside the survey, which records everything at once at its end. */
+  readonly commit?: boolean
+  /** Label of the main button: "Done" alone, "Next" inside the survey. */
+  readonly doneLabel?: string
 }
 
 /**
@@ -26,7 +31,13 @@ interface KnownLettersScreenProps {
  * A parent's estimate is not proof, so the head start stops short of solid:
  * the letter still has to hold up in the game before it can earn a star.
  */
-export function KnownLettersScreen({ onDone, onSkip, firstRun }: KnownLettersScreenProps) {
+export function KnownLettersScreen({
+  onDone,
+  onSkip,
+  firstRun,
+  commit = true,
+  doneLabel = 'Done',
+}: KnownLettersScreenProps) {
   const { profile, placeKnown } = useGame()
   const now = Date.now()
 
@@ -110,11 +121,11 @@ export function KnownLettersScreen({ onDone, onSkip, firstRun }: KnownLettersScr
           tone="mint"
           size="lg"
           onPress={() => {
-            placeKnown([...known])
-            onDone()
+            if (commit) placeKnown([...known])
+            onDone([...known])
           }}
         >
-          Done
+          {doneLabel}
         </Button>
       </div>
       <p className="known__hint">

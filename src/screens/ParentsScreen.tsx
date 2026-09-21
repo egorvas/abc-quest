@@ -11,11 +11,21 @@ import { storeSizeBytes, storageIsPersistent } from '../storage/store'
 import { townCompletion } from '../engine/town'
 import { speechRecognitionSupported } from '../speech/recognizer'
 import { ttsSupported } from '../audio/speak'
+import type { ReadingLevel } from '../storage/schema'
 import './ParentsScreen.css'
+
+const READING_LABEL: Readonly<Record<ReadingLevel, string>> = {
+  none: 'not yet',
+  letters: 'letter by letter',
+  words: 'short words',
+  syllables: 'longer words',
+  fluent: 'reads sentences',
+}
 
 interface ParentsScreenProps {
   readonly onBack: () => void
   readonly onEditKnown: () => void
+  readonly onSurvey: () => void
 }
 
 /**
@@ -25,7 +35,7 @@ interface ParentsScreenProps {
  * Everything shown here is derived from the records the engine already keeps;
  * nothing extra is stored to produce it.
  */
-export function ParentsScreen({ onBack, onEditKnown }: ParentsScreenProps) {
+export function ParentsScreen({ onBack, onEditKnown, onSurvey }: ParentsScreenProps) {
   const { profile, store, updateSettings, importStore, saveFailed } = useGame()
   const [unlocked, setUnlocked] = useState(false)
   const [answer, setAnswer] = useState('')
@@ -237,7 +247,14 @@ export function ParentsScreen({ onBack, onEditKnown }: ParentsScreenProps) {
             <Button onPress={onEditKnown} tone="amber" size="sm">
               ✎ Tick the known letters
             </Button>
+            <Button onPress={onSurvey} tone="ghost" size="sm">
+              🗺️ Redo the survey
+            </Button>
           </div>
+          <p className="pcard__muted">
+            Reading level: {READING_LABEL[profile.readingLevel]}. The survey sets
+            where the path starts; lessons it skips stay open to replay.
+          </p>
         </section>
 
         <section className="pcard">
@@ -300,8 +317,9 @@ export function ParentsScreen({ onBack, onEditKnown }: ParentsScreenProps) {
           />
           <p className="pcard__muted">
             Difficulty changes how many options are on screen, the size of the hunt
-            field, the number of pairs to match and the keyboard layout. A brand-new
-            letter is always shown at the easiest level whatever is set here.
+            field, the number of pairs to match and the keyboard layout. A fixed
+            level applies to every letter; only a letter the child has never met,
+            or is currently losing, steps down by one level for that question.
           </p>
           <p className="pcard__muted">
             Expert is for a child who already reads the alphabet. Twelve tiles at a

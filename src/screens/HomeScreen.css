@@ -111,3 +111,77 @@
   text-align: center;
   line-height: 1.25;
 }
+
+.home__lesson {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: min(100%, 560px);
+  padding: 16px 20px;
+  border-radius: var(--r-lg);
+  background: linear-gradient(165deg, rgba(251, 191, 36, 0.55), rgba(245, 158, 11, 0.35));
+  border: 3px solid #fde68a;
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.24);
+  text-align: left;
+  transition: transform 0.12s ease;
+}
+
+.home__lesson:active {
+  transform: scale(0.97);
+}
+
+.home__lesson-emoji {
+  font-size: 44px;
+  line-height: 1;
+}
+
+.home__lesson-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.home__lesson-kicker {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.home__lesson-title {
+  font-family: var(--font-letter);
+  font-size: 30px;
+  line-height: 1.1;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home__lesson-go {
+  font-size: 30px;
+}
+
+.home__bar {
+  width: min(100%, 560px);
+  height: 12px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.home__bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: linear-gradient(90deg, #fde68a, var(--mint));
+  transition: width 0.4s ease;
+}
+
+.home__mode--locked {
+  opacity: 0.5;
+  box-shadow: none;
+}

@@ -112,10 +112,22 @@ export function stageIndex(stage: ReadingStage): number {
 
 /* ---- availability and difficulty --------------------------------------- */
 
+/**
+ * A digraph the child has never met borrows from its letters: "sh" is learned
+ * inside words, and there is no separate drill for it, so its letters being
+ * known is what lets the first "ship" appear.
+ */
+function unitStability(profile: Profile, g: string): number {
+  const own = graphemeStability(profile, g)
+  if (g.length === 1 || own > 0) return own
+  const parts = [...g].map((ch) => graphemeStability(profile, ch))
+  return Math.min(...parts)
+}
+
 /** Conjunctive gate: one grapheme the child does not know kills the word. */
 export function wordUnlocked(profile: Profile, word: WordEntry): boolean {
   return word.units.every(
-    (unit) => graphemeStability(profile, unit.g) >= TUNING.reading.soundReadyHalfLifeDays,
+    (unit) => unitStability(profile, unit.g) >= TUNING.reading.soundReadyHalfLifeDays,
   )
 }
 
@@ -186,6 +198,8 @@ export interface WordQuery {
   readonly picturesOnly?: boolean
   /** Only words whose onset can be stretched: the first blending stage. */
   readonly continuantOnly?: boolean
+  /** A lesson names its own word stages; free play follows the derived stage. */
+  readonly stages?: readonly WordStage[]
 }
 
 /**
@@ -200,8 +214,7 @@ export function wordsForLetter(
   now: number,
   query: WordQuery,
 ): readonly WordEntry[] {
-  const stage = readingStage(profile)
-  const stages = STAGE_WORDS[stage]
+  const stages = query.stages ?? STAGE_WORDS[readingStage(profile)]
   if (stages.length === 0) return []
   const position = query.position ?? 'any'
 

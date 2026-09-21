@@ -17,9 +17,14 @@ interface RoundEndProps {
   /** The purse after the award has been added. */
   readonly purse: number
   readonly spendTarget: { readonly letter: LetterId; readonly slot: SlotId } | null
+  /** Stars for a lesson round, 1 to 3. Absent in free play. */
+  readonly stars?: number
+  readonly nextLesson?: { readonly id: string; readonly title: string } | null
   readonly onAgain: () => void
   readonly onHome: () => void
   readonly onTown: (open?: { readonly letter: LetterId; readonly slot: SlotId }) => void
+  /** Continues along the path: the next lesson, or the path when it is done. */
+  readonly onNext?: () => void
 }
 
 /**
@@ -36,9 +41,12 @@ export function RoundEnd({
   total,
   purse,
   spendTarget,
+  stars,
+  nextLesson,
   onAgain,
   onHome,
   onTown,
+  onNext,
 }: RoundEndProps) {
   const [goldIndex, setGoldIndex] = useState(0)
   const gold = award.newlyMastered[goldIndex] ?? null
@@ -97,8 +105,24 @@ export function RoundEnd({
   return (
     <Screen className="session session--done">
       <div className="done">
-        <div className="done__badge">🌟</div>
-        <h1 className="done__title">Well done!</h1>
+        {stars ? (
+          <div className="done__stars" aria-label={`${stars} of 3 stars`}>
+            {[1, 2, 3].map((n) => (
+              <span
+                key={n}
+                className={`done__star ${stars >= n ? 'done__star--on' : ''}`}
+                style={{ animationDelay: `${n * 0.25}s` }}
+              >
+                ★
+              </span>
+            ))}
+          </div>
+        ) : (
+          <div className="done__badge">🌟</div>
+        )}
+        <h1 className="done__title">
+          {stars === 3 ? 'Perfect!' : stars === 2 ? 'Great job!' : 'Well done!'}
+        </h1>
         <p className="done__line">
           Right first time: {correct} of {total}
         </p>
@@ -118,6 +142,11 @@ export function RoundEnd({
         <p className="done__purse">🌰 {purse}</p>
 
         <div className="done__actions">
+          {onNext ? (
+            <Button size="lg" tone="primary" onPress={onNext}>
+              {nextLesson ? `▶︎ Next: ${nextLesson.title}` : '🗺️ Back to the path'}
+            </Button>
+          ) : null}
           {spendTarget ? (
             <Button size="lg" tone="amber" onPress={() => onTown(spendTarget)}>
               🛒 Spend 🌰 {purse}
@@ -127,8 +156,8 @@ export function RoundEnd({
               🏙️ My town
             </Button>
           )}
-          <Button size="lg" tone="primary" onPress={onAgain}>
-            ▶︎ Again
+          <Button size="lg" tone={onNext ? 'ghost' : 'primary'} onPress={onAgain}>
+            {onNext ? '↻ Again for more stars' : '▶︎ Again'}
           </Button>
           <Button size="md" tone="ghost" onPress={onHome}>
             🏠 Home

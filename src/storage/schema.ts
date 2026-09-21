@@ -103,7 +103,15 @@ export interface Profile {
   /** The "which letters do you already know" screen has been answered. */
   readonly placed: boolean
   readonly reading: ReadingState
+  /** Stars earned per lesson id on the path, 1 to 3. Never taken away. */
+  readonly path: Readonly<Record<string, number>>
+  /** What the parent said the child could read when the profile was made. */
+  readonly readingLevel: ReadingLevel
 }
+
+/** The onboarding answer about reading. Drives where the path starts. */
+export type ReadingLevel = 'none' | 'letters' | 'words' | 'syllables' | 'fluent'
+export const READING_LEVELS: readonly ReadingLevel[] = ['none', 'letters', 'words', 'syllables', 'fluent']
 
 /**
  * One first-ever encounter with a word: was it decoded unaided?
@@ -158,6 +166,8 @@ export function newProfile(name: string, avatar: string, now: number): Profile {
     settings: DEFAULT_SETTINGS,
     placed: false,
     reading: EMPTY_READING,
+    path: {},
+    readingLevel: 'none',
   }
 }
 
@@ -189,6 +199,10 @@ export function migrate(raw: unknown): Store {
       seedsEarned: numberOr(p.seedsEarned, numberOr(p.seeds, 0)),
       town: migrateTown(p.town),
       reading: migrateReading(p.reading),
+      path: migratePath(p.path),
+      readingLevel: READING_LEVELS.includes(p.readingLevel as ReadingLevel)
+        ? (p.readingLevel as ReadingLevel)
+        : 'none',
     }))
 
   const activeId =
@@ -244,6 +258,15 @@ function migrateTown(raw: unknown): Town {
     (value): value is ExtraId => EXTRA_IDS.includes(value as ExtraId),
   )
   return { lots, extras: [...new Set(extras)], spent: numberOr(raw.spent, 0) }
+}
+
+function migratePath(raw: unknown): Readonly<Record<string, number>> {
+  if (!isRecord(raw)) return {}
+  const out: Record<string, number> = {}
+  for (const [key, value] of Object.entries(raw)) {
+    if (typeof value === 'number' && value >= 1 && value <= 3) out[key] = Math.round(value)
+  }
+  return out
 }
 
 function migrateReading(raw: unknown): ReadingState {

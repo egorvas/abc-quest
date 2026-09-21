@@ -88,3 +88,25 @@
   align-items: stretch;
   width: min(360px, 100%);
 }
+
+.done__stars {
+  display: flex;
+  gap: 6px;
+  font-size: clamp(48px, 9vh, 80px);
+  line-height: 1;
+}
+
+.done__star {
+  color: rgba(255, 255, 255, 0.22);
+}
+
+.done__star--on {
+  color: #fde68a;
+  text-shadow: 0 0 18px rgba(253, 230, 138, 0.8);
+  animation: done-star 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+@keyframes done-star {
+  from { transform: scale(0.2) rotate(-30deg); opacity: 0; }
+  to { transform: scale(1) rotate(0); opacity: 1; }
+}

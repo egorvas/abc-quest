@@ -25,6 +25,8 @@ import { nextPurchase } from '../engine/town'
 import { TUNING } from '../engine/tuning'
 import type { LetterId } from '../data/letters'
 import type { Profile, SlotId } from '../storage/schema'
+import { lessonInfo } from '../data/lessons'
+import { nextLessonAfter, starsFor } from '../engine/path'
 import './SessionScreen.css'
 
 const RENDERERS = {
@@ -48,8 +50,12 @@ interface SessionScreenProps {
   readonly modeIds?: readonly ModeId[]
   /** A letter the child chose to practise from its lot in the town. */
   readonly focus?: LetterId
+  /** A lesson on the path: its letters, games and words replace the free mix. */
+  readonly lesson?: string
   readonly onHome: () => void
   readonly onTown: (open?: { readonly letter: LetterId; readonly slot: SlotId }) => void
+  readonly onLesson: (lessonId: string) => void
+  readonly onPath: () => void
 }
 
 /**
@@ -59,8 +65,18 @@ interface SessionScreenProps {
  * on what actually happens: a mistake is always followed by something the
  * child can do, and the round never ends on a failure.
  */
-export function SessionScreen({ modeIds, focus, onHome, onTown }: SessionScreenProps) {
-  const { profile, recordAttempt, introduce, closeRound } = useGame()
+export function SessionScreen({
+  modeIds,
+  focus,
+  lesson: lessonId,
+  onHome,
+  onTown,
+  onLesson,
+  onPath,
+}: SessionScreenProps) {
+  const { profile, recordAttempt, introduce, closeRound, finishLesson } = useGame()
+  const lesson = lessonId ? lessonInfo(lessonId) : null
+  const [stars, setStars] = useState(0)
   const [queue, setQueue] = useState<readonly SessionItem[]>([])
   const [index, setIndex] = useState(0)
   const [marks, setMarks] = useState<readonly StepMark[]>([])
@@ -76,13 +92,16 @@ export function SessionScreen({ modeIds, focus, onHome, onTown }: SessionScreenP
   const startRound = useCallback(() => {
     if (!profile) return
     const plan = buildSession(profile, Date.now(), {
-      modeIds,
+      modeIds: lesson ? lesson.modes : modeIds,
       focus,
+      letters: lesson?.letters,
+      wordStages: lesson?.wordStages,
+      level: lesson?.level,
       micAvailable: profile.settings.micEnabled && speechRecognitionSupported(),
       caseMode: profile.settings.caseMode,
       letterPool: profile.settings.letterPool,
       difficulty: profile.settings.difficulty,
-      length: TUNING.sessionLength,
+      length: lesson ? lesson.length : TUNING.sessionLength,
     })
     setQueue(plan.items)
     setMarks(plan.items.map((_, i) => (i === 0 ? 'current' : 'pending')))
@@ -110,9 +129,15 @@ export function SessionScreen({ modeIds, focus, onHome, onTown }: SessionScreenP
       items: queue.length,
       correct: stats.current.correct,
       letters: [...stats.current.letters],
+      firstLesson: lesson ? !(start.path[lesson.id] > 0) : false,
     }
     const earned = nutsForRound(start, after, facts, now)
     setAward(earned)
+    if (lesson) {
+      const got = starsFor(facts.correct, facts.items)
+      setStars(got)
+      finishLesson(lesson.id, got)
+    }
     closeRound({
       items: facts.items,
       correct: facts.correct,
@@ -121,7 +146,7 @@ export function SessionScreen({ modeIds, focus, onHome, onTown }: SessionScreenP
       letters: facts.letters,
       nuts: earned.total,
     })
-  }, [queue.length, closeRound])
+  }, [queue.length, closeRound, finishLesson, lesson])
 
   const handleAttempt = useCallback(
     (attempt: Attempt) => {
@@ -178,6 +203,7 @@ export function SessionScreen({ modeIds, focus, onHome, onTown }: SessionScreenP
   if (award) {
     // The purse has already been updated by closeRound by the time this renders.
     const target = nextPurchase(profile, Date.now())
+    const next = lesson ? nextLessonAfter(profile, lesson.id) : null
     return (
       <RoundEnd
         award={award}
@@ -185,9 +211,12 @@ export function SessionScreen({ modeIds, focus, onHome, onTown }: SessionScreenP
         total={queue.length}
         purse={profile.seeds}
         spendTarget={target}
+        stars={lesson ? stars : undefined}
+        nextLesson={next ? { id: next.id, title: next.title } : null}
         onAgain={startRound}
         onHome={onHome}
         onTown={onTown}
+        onNext={lesson ? (next ? () => onLesson(next.id) : onPath) : undefined}
       />
     )
   }

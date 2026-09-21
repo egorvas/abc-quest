@@ -1,6 +1,7 @@
 # ABC Quest
 
-An English alphabet trainer for a 4-6 year old. A web app for iPad with no
+A learn-to-read trainer in English for a 4-6 year old: letters, sounds,
+blending, short words, digraphs, syllables. A web app for iPad with no
 backend: all progress lives in this browser's `localStorage`.
 
 **Play: https://egorvas.github.io/abc-quest/**
@@ -8,9 +9,38 @@ backend: all progress lives in this browser's `localStorage`.
 Everything in the app is in English, including the interface. There is barely
 any text: a child who cannot read yet navigates by icons.
 
+## Two ways to play
+
+**The path** is the lesson sequence, Duolingo-style: seven units, twenty-nine
+lessons, one round each. Letters, then the sound of every letter, then sliding
+sounds into `s-u-n`, then reading and building short words, then two letters
+that make one sound (`sh`, `ch`, `ck`), then two-syllable words joined by
+parts, then a final unit that mixes everything and climbs to the expert level.
+A lesson is passed the moment it is finished; the stars say how cleanly (90%
+right first time for three), and replaying can only raise them. The next
+lesson unlocks when the current one is done. The home screen always shows the
+next lesson and the progress along the path.
+
+**The games** are free play: any single game, or a mixed round, with the
+scheduler still choosing the letters and words the child needs most. Reading
+games unlock once the first sounds are in.
+
+Both feed the same memory model, and both pay in nuts for Letter Town.
+
+### The survey
+
+A new profile is asked two questions before the first lesson: which letters
+the child already knows, and how they read (not yet, letter by letter, short
+words, longer words, sentences). The answers set where the path starts. Known
+letters pass the letter and sound lessons they cover; the reading level passes
+whole units below it. Passed lessons get one star, not three: they were
+vouched for, not earned, and stay open to replay. The survey can be redone from
+the grown-ups screen.
+
 ## Games
 
-Eight of them, across four memory channels.
+Thirteen of them, across four memory channels, plus the reading games described
+further down.
 
 | Game | What the child does | Skill |
 |---|---|---|
@@ -44,7 +74,9 @@ Three settings in the grown-ups section shape the rest:
 - **Difficulty** — automatic, where each letter gets the level it has earned,
   or a fixed easy / medium / hard / expert. This drives how many options are on
   screen, the size of the hunt field, the number of pairs to match and the
-  keyboard layout.
+  keyboard layout. A fixed level applies to every letter; only a letter the
+  child has never met, or is currently losing, steps down one level for that
+  question.
 
 ### Expert
 
@@ -257,6 +289,7 @@ npm run dev          # http://localhost:5173/abc-quest/
 npm run build
 npm run deploy       # build, then push to the gh-pages branch
 npm run simulate     # run the engine against a synthetic child
+npx tsx scripts/dev/path-check.ts   # print the rounds each lesson would build
 ```
 
 `simulate` plays the app with no browser and prints the learning curve. It
