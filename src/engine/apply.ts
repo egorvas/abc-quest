@@ -5,6 +5,7 @@ import { applyAnswer, NEW_CELL, dayIndex } from './memory'
 import { cellKey } from './skills'
 import { recordConfusion, decayConfusions } from './confusion'
 import { TUNING } from './tuning'
+import { applyWordAnswer } from './reading'
 import type { LetterId } from '../data/letters'
 
 /**
@@ -34,11 +35,31 @@ export function applyAttempt(profile: Profile, attempt: Attempt, now: number): P
     confusion = recordConfusion(confusion, item.letter, picked)
   }
 
-  return {
+  const next: Profile = {
     ...profile,
     cells: { ...profile.cells, [key]: updated },
     confusion,
   }
+
+  // A reading item also carries evidence about the word itself.
+  if (item.wordId && attempt.wordSkill) {
+    return applyWordAnswer(
+      next,
+      {
+        wordId: item.wordId,
+        skill: attempt.wordSkill,
+        correct,
+        assisted,
+        gamma: attempt.gamma,
+        weight: attempt.weight,
+        focus: item.letter.toLowerCase(),
+        placed: attempt.placed,
+        wrongGrapheme: attempt.wrongGrapheme,
+      },
+      now,
+    )
+  }
+  return next
 }
 
 /**
@@ -86,6 +107,10 @@ export function placeKnownLetters(
         cells[key] = skill === 'spot' ? head : halfHead
       }
     }
+    // A child who "knows the letter" can sound it out, and the reading track
+    // is gated on exactly that, so the sound gets the same start as spotting.
+    const soundKey = cellKey(letter, 'sound', 'upper')
+    if ((cells[soundKey]?.n ?? 0) === 0) cells[soundKey] = head
   }
 
   return {

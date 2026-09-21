@@ -2,7 +2,7 @@ import type { LetterId } from '../data/letters'
 import { LETTER_IDS } from '../data/letters'
 import type { CaseMode, Difficulty, LetterPool, Profile } from '../storage/schema'
 import type { Level, ModeId, SessionItem } from '../modes/types'
-import { MODES, MODE_LIST } from '../modes/registry'
+import { MODES, MODE_LIST, READING_MODES } from '../modes/registry'
 import type { GlyphCase, SkillId } from './skills'
 import { cellKey, CORE_SKILLS, SKILLS } from './skills'
 import { NEW_CELL, recall } from './memory'
@@ -10,6 +10,17 @@ import { INTRO_ORDER, sameRhymeFamily } from './curriculum'
 import { contrastDecision, partnersOf } from './confusion'
 import { TUNING } from './tuning'
 import { letterStability, letterStatus } from './mastery'
+import {
+  gapIndexFor,
+  readingStage,
+  wordBestRecall,
+  wordDistractorsFor,
+  wordUnlocked,
+  wordsForLetter,
+  type GapPosition,
+} from './reading'
+import { SHORT_VOWELS } from '../data/phonics'
+import { WORDS } from '../data/words'
 
 /**
  * Builds the queue of questions for one session.
@@ -153,10 +164,38 @@ export function nextIntroductions(
   return remaining.slice(0, TUNING.maxNewPerSession)
 }
 
-function availableModes(options: BuildOptions): readonly ModeId[] {
+function availableModes(profile: Profile, options: BuildOptions): readonly ModeId[] {
   const explicit = options.modeIds ?? []
   const pool = explicit.length > 0 ? explicit.map((id) => MODES[id]) : MODE_LIST.filter((m) => m.inAdventure)
-  return pool.filter((mode) => options.micAvailable || !mode.needsMic).map((m) => m.id)
+  // Reading opens once the first sound set is in. Before that a word is a
+  // guaranteed failure dressed up as a lesson.
+  const stage = readingStage(profile)
+  return pool
+    .filter((mode) => options.micAvailable || !mode.needsMic)
+    .filter((mode) => stage !== 'sounds' || !READING_MODES.includes(mode.id))
+    .map((m) => m.id)
+}
+
+/**
+ * Whether a letter can carry a reading exercise right now: its sound has to
+ * be known, and a word that practises it has to exist at the current stage.
+ */
+function readableWith(profile: Profile, letter: LetterId, modeId: ModeId, now: number): boolean {
+  if (cellRecall(profile, letter, 'sound', 'upper', now) < TUNING.reading.soundRecallToRead) {
+    return false
+  }
+  const picturesOnly = modeId !== 'buildWord'
+  return wordsForLetter(profile, now, { letter, picturesOnly }).length > 0
+}
+
+/** The twin drill needs a known partner and both letters on their own feet. */
+function twinFor(profile: Profile, letter: LetterId, now: number): LetterId | null {
+  const partner = partnersOf(profile.confusion, letter)[0]
+  if (!partner) return null
+  const targetRecall = cellRecall(profile, letter, 'spot', 'upper', now)
+  const partnerRecall = cellRecall(profile, partner, 'spot', 'upper', now)
+  const cell = profile.cells[cellKey(letter, 'spot', 'upper')] ?? NEW_CELL
+  return contrastDecision(targetRecall, partnerRecall, cell.n, cell.cc).allow ? partner : null
 }
 
 /**
@@ -178,16 +217,24 @@ function modeForLetter(
   used: Map<ModeId, number>,
   length: number,
   expert: boolean,
-): ModeId {
+): ModeId | null {
   // A letter the child has never seen is introduced by recognising it, never
   // by being asked to say or write it. Meeting a glyph for the first time in a
   // production exercise is just a guaranteed failure. The same holds while the
   // letter is still weak: production has to be earned.
-  const eligible =
-    bucket === 'new' || bucket === 'weak'
-      ? modeIds.filter((id) => !DEMANDING.includes(id))
-      : modeIds
-  const pool = eligible.length > 0 ? eligible : modeIds
+  const eligible = modeIds.filter((id) => {
+    if ((bucket === 'new' || bucket === 'weak') && DEMANDING.includes(id)) return false
+    if (READING_MODES.includes(id)) return bucket !== 'new' && readableWith(profile, letter, id, now)
+    if (id === 'twinLetters') return twinFor(profile, letter, now) !== null
+    return true
+  })
+  const pool =
+    eligible.length > 0
+      ? eligible
+      : modeIds.filter((id) => !READING_MODES.includes(id) && id !== 'twinLetters')
+  // A round restricted to reading, and a letter that cannot read yet: this
+  // letter sits the round out rather than getting a question it cannot answer.
+  if (pool.length === 0) return null
 
   if (bucket === 'new') {
     const first = GENTLE.find((id) => pool.includes(id))
@@ -204,6 +251,11 @@ function modeForLetter(
       length * (expert ? TUNING.expertDemandingShareCap : TUNING.demandingShareCap),
     ),
   )
+  // Reading gets its own slice of the round, growing with the stage, so a
+  // round never turns entirely into words and the sound cells never go stale.
+  const readingUsed = READING_MODES.reduce((sum, id) => sum + (used.get(id) ?? 0), 0)
+  const readingShare = TUNING.reading.share[readingStage(profile)] ?? 0
+  const readingCap = Math.round(length * readingShare)
 
   const scored = pool.map((id) => {
     const mode = MODES[id]
@@ -220,9 +272,18 @@ function modeForLetter(
     const overuse = Math.max(0, (used.get(id) ?? 0) - cap + 1) * 1.2
     const demandingPenalty =
       DEMANDING.includes(id) && demandingUsed >= demandingCap ? 1.4 : 0
+    const reading = READING_MODES.includes(id)
+    const readingPenalty = reading && readingUsed >= readingCap ? 1.4 : 0
+    // A word is judged by the word's own recall, not the letter's sound cell:
+    // a sound the child knows cold can still be a word never read.
+    const readingScore = reading
+      ? Math.min(...wordsForLetter(profile, now, { letter, picturesOnly: id !== 'buildWord' })
+          .slice(0, 3)
+          .map((word) => wordBestRecall(profile, word, now)))
+      : p
     return {
       id,
-      score: p + corePriority + overuse + demandingPenalty + Math.random() * 0.12,
+      score: (reading ? readingScore : p) + corePriority + overuse + demandingPenalty + readingPenalty + Math.random() * 0.12,
     }
   })
   scored.sort((a, b) => a.score - b.score)
@@ -240,7 +301,8 @@ function buildCandidates(
   used: Map<ModeId, number>,
   length: number,
 ): readonly Candidate[] {
-  return letters.map((letter) => {
+  const candidates: Candidate[] = []
+  for (const letter of letters) {
     // The bucket describes the letter, not one exercise: it decides what kind
     // of question the child gets, so it cannot depend on the question.
     const coreCells = CORE_SKILLS.flatMap((skill) =>
@@ -266,9 +328,10 @@ function buildCandidates(
       length,
       options.difficulty === 4,
     )
+    if (!modeId) continue
     const mode = MODES[modeId]
     const glyphCase = chooseCase(profile, letter, mode.skill, now, options.caseMode)
-    return {
+    candidates.push({
       letter,
       modeId,
       skill: mode.skill,
@@ -276,8 +339,9 @@ function buildCandidates(
       p: letterP,
       bucket,
       stability: letterStability(profile, letter),
-    }
-  })
+    })
+  }
+  return candidates
 }
 
 /** How many items of each kind, given how far along the child is. */
@@ -477,7 +541,7 @@ export function buildSession(
   now: number,
   options: BuildOptions,
 ): SessionPlan {
-  const modeIds = availableModes(options)
+  const modeIds = availableModes(profile, options)
   const fresh = nextIntroductions(profile, now, options.letterPool)
   const letters = [...profile.introduced, ...fresh]
   // Early on there are only a handful of letters. A full-length round would
@@ -509,6 +573,14 @@ export function buildSession(
     modeUsage,
     letters.length,
   )
+  // A reading-only round with no readable letter still has to be a round.
+  if (candidates.length === 0) {
+    if (options.modeIds && options.modeIds.length > 0) {
+      return buildSession(profile, now, { ...options, modeIds: undefined })
+    }
+    return { items: [], introduced: fresh }
+  }
+
   const masteredRatio =
     profile.introduced.filter(
       (letter) => letterStatus(profile, letter, now).stage === 'mastered',
@@ -556,6 +628,7 @@ export function buildSession(
 
   const arranged = arrange(applyFocus(picked.slice(0, length), candidates, options.focus))
 
+  const usedWords = new Set<string>()
   const items = arranged.map((candidate, index): SessionItem => {
     const mode = MODES[candidate.modeId]
     const itemLevel = pickLevel(candidate, options.difficulty)
@@ -583,10 +656,75 @@ export function buildSession(
       // screen is where the remaining difficulty lives.
       mixedCaseOptions: itemLevel >= 3 && options.caseMode === 'mixed',
       reason: candidate.bucket,
+      ...readingFields(profile, candidate, itemLevel, now, usedWords),
+      ...(candidate.modeId === 'twinLetters'
+        ? { twin: twinFor(profile, candidate.letter, now) ?? undefined }
+        : {}),
     }
   })
 
   return { items, introduced: fresh }
+}
+
+/**
+ * The word behind a reading item, chosen for the focus letter at the level's
+ * position, plus the wrong pictures. A word is not repeated within a round.
+ */
+function readingFields(
+  profile: Profile,
+  candidate: Candidate,
+  level: Level,
+  now: number,
+  usedWords: Set<string>,
+): Partial<SessionItem> {
+  const modeId = candidate.modeId
+  if (!READING_MODES.includes(modeId)) return {}
+  const letter = candidate.letter
+  const picturesOnly = modeId !== 'buildWord'
+  const mode = MODES[modeId]
+
+  const isVowel = SHORT_VOWELS.includes(letter)
+  const wanted: GapPosition =
+    modeId !== 'missingLetter'
+      ? 'any'
+      : isVowel
+        ? level >= 3
+          ? 'vowel'
+          : 'first'
+        : level === 1
+          ? 'first'
+          : level === 2
+            ? Math.random() < 0.5
+              ? 'first'
+              : 'last'
+            : 'any'
+
+  const continuantOnly = modeId === 'blendIt' && level <= 2
+  const pick = (position: GapPosition) =>
+    wordsForLetter(profile, now, { letter, position, picturesOnly, continuantOnly }).find(
+      (word) => !usedWords.has(word.id),
+    )
+  const word = pick(wanted) ?? pick('any')
+  if (!word) return {}
+  usedWords.add(word.id)
+
+  const fields: { -readonly [K in keyof SessionItem]?: SessionItem[K] } = { wordId: word.id }
+  if (modeId === 'missingLetter') {
+    fields.gapIndex = gapIndexFor(word, letter, wanted) ?? gapIndexFor(word, letter, 'any') ?? 0
+  }
+  if (modeId === 'readPick' || modeId === 'blendIt') {
+    const pool = wordsForLetter(profile, now, { letter: letter, picturesOnly: true }).concat(
+      WORDS.filter((w) => w.picture !== 'none' && wordUnlocked(profile, w)),
+    )
+    fields.wordDistractors = wordDistractorsFor(
+      word,
+      Math.max(1, mode.options(level) - 1),
+      pool,
+      level === 1 ? 'none' : level === 2 ? 'onset' : 'vowel',
+    )
+    if (modeId === 'blendIt') fields.segmentation = level >= 3 ? 'phoneme' : 'onsetRime'
+  }
+  return fields
 }
 
 /**

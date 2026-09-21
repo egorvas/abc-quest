@@ -11,6 +11,11 @@ import { Hunt } from '../modes/Hunt'
 import { Pairs } from '../modes/Pairs'
 import { TraceIt } from '../modes/TraceIt'
 import { FirstSound } from '../modes/FirstSound'
+import { MissingLetter } from '../modes/MissingLetter'
+import { ReadPick } from '../modes/ReadPick'
+import { BlendIt } from '../modes/BlendIt'
+import { BuildWord } from '../modes/BuildWord'
+import { TwinLetters } from '../modes/TwinLetters'
 import { Screen, TopBar } from '../ui/Screen'
 import { Button } from '../ui/Button'
 import { SessionProgress, type StepMark } from '../ui/SessionProgress'
@@ -31,6 +36,11 @@ const RENDERERS = {
   pairs: Pairs,
   traceIt: TraceIt,
   firstSound: FirstSound,
+  missingLetter: MissingLetter,
+  readPick: ReadPick,
+  blendIt: BlendIt,
+  buildWord: BuildWord,
+  twinLetters: TwinLetters,
 } as const
 
 interface SessionScreenProps {

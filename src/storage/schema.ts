@@ -1,4 +1,5 @@
 import { isLetterId, type LetterId } from '../data/letters'
+import type { WordId } from '../data/words'
 import type { Cell } from '../engine/memory'
 import type { CellKey } from '../engine/skills'
 
@@ -101,7 +102,29 @@ export interface Profile {
   readonly settings: Settings
   /** The "which letters do you already know" screen has been answered. */
   readonly placed: boolean
+  readonly reading: ReadingState
 }
+
+/**
+ * One first-ever encounter with a word: was it decoded unaided?
+ *
+ * This is the only record that tells blending apart from memorising word
+ * pictures. Every word cell going solid proves nothing on its own; accuracy
+ * on words never seen before is the whole test.
+ */
+export interface NovelEntry {
+  readonly w: WordId
+  readonly ok: boolean
+  readonly at: number
+}
+
+export interface ReadingState {
+  /** Newest first, capped at TUNING.reading.novelWindow. */
+  readonly novel: readonly NovelEntry[]
+  readonly wordsIntroduced: readonly WordId[]
+}
+
+export const EMPTY_READING: ReadingState = { novel: [], wordsIntroduced: [] }
 
 export interface Store {
   readonly v: typeof SCHEMA_VERSION
@@ -134,6 +157,7 @@ export function newProfile(name: string, avatar: string, now: number): Profile {
     sessions: [],
     settings: DEFAULT_SETTINGS,
     placed: false,
+    reading: EMPTY_READING,
   }
 }
 
@@ -164,6 +188,7 @@ export function migrate(raw: unknown): Store {
       // Everything a v1 profile earned is by definition still unspent.
       seedsEarned: numberOr(p.seedsEarned, numberOr(p.seeds, 0)),
       town: migrateTown(p.town),
+      reading: migrateReading(p.reading),
     }))
 
   const activeId =
@@ -219,6 +244,20 @@ function migrateTown(raw: unknown): Town {
     (value): value is ExtraId => EXTRA_IDS.includes(value as ExtraId),
   )
   return { lots, extras: [...new Set(extras)], spent: numberOr(raw.spent, 0) }
+}
+
+function migrateReading(raw: unknown): ReadingState {
+  if (!isRecord(raw)) return EMPTY_READING
+  const novel = (Array.isArray(raw.novel) ? raw.novel : [])
+    .filter(
+      (entry): entry is NovelEntry =>
+        isRecord(entry) && typeof entry.w === 'string' && typeof entry.ok === 'boolean',
+    )
+    .slice(0, 48)
+  const wordsIntroduced = (Array.isArray(raw.wordsIntroduced) ? raw.wordsIntroduced : []).filter(
+    (value): value is WordId => typeof value === 'string',
+  )
+  return { novel, wordsIntroduced: [...new Set(wordsIntroduced)] }
 }
 
 function normaliseCase(value: unknown): CaseMode {

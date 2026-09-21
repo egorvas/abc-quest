@@ -119,6 +119,40 @@ export const TUNING = {
   sproutAtHalfLifeDays: 1,
   flowerAtHalfLifeDays: 7,
 
+  /* ---- reading ---- */
+  reading: {
+    /** A grapheme below this half-life is never allowed inside a word. */
+    soundReadyHalfLifeDays: 2.5,
+    /** All but one grapheme of a new word must be at least this settled. */
+    soundSolidRequired: 7,
+    /** A word this settled counts towards a stage exit. */
+    wordReadyHalfLifeDays: 2,
+    /** Weight of the letter-derived prior for a word already met. */
+    priorWeight: 0.65,
+    /** Grapheme credit from building the word with the child's own hands. */
+    buildCreditFactor: 0.5,
+    /** Grapheme credit from a first-ever correct decode: it cannot be recall. */
+    novelCreditFactor: 0.35,
+    /** How many first encounters the transfer test looks back over. */
+    novelWindow: 24,
+    /** Correct-first-try share on never-seen words needed to leave a stage. */
+    novelAccuracy: 0.7,
+    newWordsPerSession: 2,
+    /** Share of a round given to reading, by stage. Zero before sounds are in. */
+    share: {
+      sounds: 0,
+      vc: 0.3,
+      'cvc-cont': 0.4,
+      cvc: 0.5,
+      digraph: 0.55,
+      twosyl: 0.6,
+    },
+    /** The focus letter's sound must be at least this known to read with it. */
+    soundRecallToRead: 0.5,
+    /** Same word may not reappear within this many items. */
+    repeatGap: 4,
+  },
+
   /* ---- Letter Town: the nut economy ---- */
   town: {
     /** Slot prices. Price order is gate order: the cheapest is always the one

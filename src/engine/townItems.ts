@@ -40,7 +40,7 @@ const ROWS: Readonly<Record<LetterId, Row>> = {
   D: { back: ['🚪', 'Door'], friend: ['🐬', 'Dolphin'] },
   E: { back: ['🚂', 'Engine'], friend: ['🦅', 'Eagle'] },
   F: { back: ['🏭', 'Factory'], friend: ['🐸', 'Frog'] },
-  G: { back: ['⛩️', 'Gate'], friend: ['🐐', 'Goat'] },
+  G: { back: ['⛩️', 'Gate'], friend: ['🦍', 'Gorilla'] },
   H: { back: ['🏥', 'Hospital'], friend: ['🐴', 'Horse'] },
   I: { back: ['🛖', 'Igloo'], friend: ['🦎', 'Iguana'] },
   J: { back: ['🛩️', 'Jet'], friend: ['🪼', 'Jellyfish'] },

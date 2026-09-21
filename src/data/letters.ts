@@ -1,6 +1,10 @@
 /**
- * Static letter data: glyphs, the "A is for Apple" association word and
- * the phonetic sound of each letter.
+ * Static letter data: glyphs, names and the "A is for Apple" association
+ * word. The sounds live in phonics.ts, because a sound is not a string that
+ * can be spoken on its own: half of them must never be.
+ *
+ * The association word starts with the letter's first sound. That rules out
+ * Giraffe for G and Ice cream for I, both of which teach the wrong sound.
  *
  * Nothing here is user state - it never goes to localStorage.
  */
@@ -16,8 +20,6 @@ export interface LetterInfo {
   readonly lower: string
   /** English name of the letter, as spoken ("bee", "double-u"). */
   readonly name: string
-  /** Primary phonetic sound, used by the "sound" prompt ("buh", "kuh"). */
-  readonly sound: string
   /** Association word in English. */
   readonly word: string
   /** Emoji illustrating the word. */
@@ -25,32 +27,32 @@ export interface LetterInfo {
 }
 
 export const LETTERS: readonly LetterInfo[] = [
-  { id: 'A', lower: 'a', name: 'ay',       sound: 'a',   word: 'Apple',    emoji: '🍎' },
-  { id: 'B', lower: 'b', name: 'bee',      sound: 'buh', word: 'Ball',       emoji: '⚽' },
-  { id: 'C', lower: 'c', name: 'see',      sound: 'kuh', word: 'Cat',     emoji: '🐱' },
-  { id: 'D', lower: 'd', name: 'dee',      sound: 'duh', word: 'Dog',    emoji: '🐶' },
-  { id: 'E', lower: 'e', name: 'ee',       sound: 'eh',  word: 'Elephant',      emoji: '🐘' },
-  { id: 'F', lower: 'f', name: 'ef',       sound: 'fff', word: 'Fish',      emoji: '🐟' },
-  { id: 'G', lower: 'g', name: 'jee',      sound: 'guh', word: 'Giraffe',     emoji: '🦒' },
-  { id: 'H', lower: 'h', name: 'aitch',    sound: 'huh', word: 'House',       emoji: '🏠' },
-  { id: 'I', lower: 'i', name: 'eye',      sound: 'ih',  word: 'Ice cream', emoji: '🍦' },
-  { id: 'J', lower: 'j', name: 'jay',      sound: 'juh', word: 'Juice',       emoji: '🧃' },
-  { id: 'K', lower: 'k', name: 'kay',      sound: 'kuh', word: 'Kite', emoji: '🪁' },
-  { id: 'L', lower: 'l', name: 'el',       sound: 'lll', word: 'Lion',       emoji: '🦁' },
-  { id: 'M', lower: 'm', name: 'em',       sound: 'mmm', word: 'Moon',      emoji: '🌙' },
-  { id: 'N', lower: 'n', name: 'en',       sound: 'nnn', word: 'Nose',       emoji: '👃' },
-  { id: 'O', lower: 'o', name: 'oh',       sound: 'o',   word: 'Orange',  emoji: '🍊' },
-  { id: 'P', lower: 'p', name: 'pee',      sound: 'puh', word: 'Pizza',     emoji: '🍕' },
-  { id: 'Q', lower: 'q', name: 'cue',      sound: 'kwuh', word: 'Queen',  emoji: '👑' },
-  { id: 'R', lower: 'r', name: 'ar',       sound: 'rrr', word: 'Rainbow',    emoji: '🌈' },
-  { id: 'S', lower: 's', name: 'ess',      sound: 'sss', word: 'Sun',    emoji: '☀️' },
-  { id: 'T', lower: 't', name: 'tee',      sound: 'tuh', word: 'Tree',    emoji: '🌳' },
-  { id: 'U', lower: 'u', name: 'you',      sound: 'uh',  word: 'Umbrella',      emoji: '☂️' },
-  { id: 'V', lower: 'v', name: 'vee',      sound: 'vvv', word: 'Van',    emoji: '🚐' },
-  { id: 'W', lower: 'w', name: 'double u', sound: 'wuh', word: 'Watermelon',     emoji: '🍉' },
-  { id: 'X', lower: 'x', name: 'ex',       sound: 'ks',  word: 'Fox',      emoji: '🦊' },
-  { id: 'Y', lower: 'y', name: 'why',      sound: 'yuh', word: 'Yo-yo',     emoji: '🪀' },
-  { id: 'Z', lower: 'z', name: 'zee',      sound: 'zzz', word: 'Zebra',     emoji: '🦓' },
+  { id: 'A', lower: 'a', name: 'ay',       word: 'Apple',    emoji: '🍎' },
+  { id: 'B', lower: 'b', name: 'bee',      word: 'Ball',       emoji: '⚽' },
+  { id: 'C', lower: 'c', name: 'see',      word: 'Cat',     emoji: '🐱' },
+  { id: 'D', lower: 'd', name: 'dee',      word: 'Dog',    emoji: '🐶' },
+  { id: 'E', lower: 'e', name: 'ee',       word: 'Elephant',      emoji: '🐘' },
+  { id: 'F', lower: 'f', name: 'ef',       word: 'Fish',      emoji: '🐟' },
+  { id: 'G', lower: 'g', name: 'jee',      word: 'Goat',        emoji: '🐐' },
+  { id: 'H', lower: 'h', name: 'aitch',    word: 'House',       emoji: '🏠' },
+  { id: 'I', lower: 'i', name: 'eye',      word: 'Insect',    emoji: '🐞' },
+  { id: 'J', lower: 'j', name: 'jay',      word: 'Juice',       emoji: '🧃' },
+  { id: 'K', lower: 'k', name: 'kay',      word: 'Kite', emoji: '🪁' },
+  { id: 'L', lower: 'l', name: 'el',       word: 'Lion',       emoji: '🦁' },
+  { id: 'M', lower: 'm', name: 'em',       word: 'Moon',      emoji: '🌙' },
+  { id: 'N', lower: 'n', name: 'en',       word: 'Nose',       emoji: '👃' },
+  { id: 'O', lower: 'o', name: 'oh',       word: 'Orange',  emoji: '🍊' },
+  { id: 'P', lower: 'p', name: 'pee',      word: 'Pizza',     emoji: '🍕' },
+  { id: 'Q', lower: 'q', name: 'cue',      word: 'Queen',  emoji: '👑' },
+  { id: 'R', lower: 'r', name: 'ar',       word: 'Rainbow',    emoji: '🌈' },
+  { id: 'S', lower: 's', name: 'ess',      word: 'Sun',    emoji: '☀️' },
+  { id: 'T', lower: 't', name: 'tee',      word: 'Tree',    emoji: '🌳' },
+  { id: 'U', lower: 'u', name: 'you',      word: 'Umbrella',      emoji: '☂️' },
+  { id: 'V', lower: 'v', name: 'vee',      word: 'Van',    emoji: '🚐' },
+  { id: 'W', lower: 'w', name: 'double u', word: 'Watermelon',     emoji: '🍉' },
+  { id: 'X', lower: 'x', name: 'ex',       word: 'Fox',      emoji: '🦊' },
+  { id: 'Y', lower: 'y', name: 'why',      word: 'Yo-yo',     emoji: '🪀' },
+  { id: 'Z', lower: 'z', name: 'zee',      word: 'Zebra',     emoji: '🦓' },
 ] as const
 
 export const LETTER_IDS: readonly LetterId[] = LETTERS.map((l) => l.id)

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { LetterId } from '../data/letters'
 import type { Attempt, SessionItem, Verdict } from './types'
-import { MODES } from './registry'
+import { MODES, WORD_SKILL_OF } from './registry'
 import { TUNING } from '../engine/tuning'
 import { sameRhymeFamily } from '../engine/curriculum'
 
@@ -22,7 +22,11 @@ export interface AttemptTracker {
   /** The game has shown the answer; the item is now assisted. */
   readonly revealed: boolean
   readonly registerMiss: (picked: LetterId | null) => void
-  readonly finish: (verdict: Verdict, optionsShown?: number) => Attempt
+  readonly finish: (
+    verdict: Verdict,
+    optionsShown?: number,
+    extra?: Pick<Attempt, 'wordSkill' | 'placed' | 'wrongGrapheme'>,
+  ) => Attempt
   /** True when the pick is the right letter in the wrong case or a rhyme twin. */
   readonly verdictFor: (picked: LetterId, pickedCase?: 'upper' | 'lower') => Verdict
 }
@@ -80,7 +84,11 @@ export function useAttempt(
   )
 
   const finish = useCallback(
-    (verdict: Verdict, optionsShown?: number): Attempt => {
+    (
+      verdict: Verdict,
+      optionsShown?: number,
+      extra?: Pick<Attempt, 'wordSkill' | 'placed' | 'wrongGrapheme'>,
+    ): Attempt => {
       const mode = MODES[item.modeId]
       const options = optionsShown ?? mode.options(item.level)
       const attempt: Attempt = {
@@ -91,6 +99,10 @@ export function useAttempt(
         responseMs: Date.now() - started.current,
         gamma: mode.gamma(item.level, options),
         weight: mode.weight(item.level),
+        // A reading item is also evidence about its word.
+        wordSkill: extra?.wordSkill ?? WORD_SKILL_OF[item.modeId],
+        placed: extra?.placed,
+        wrongGrapheme: extra?.wrongGrapheme,
       }
       if (!settled.current) {
         settled.current = true

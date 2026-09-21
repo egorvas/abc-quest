@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
 import type { LetterId } from '../data/letters'
 import { letterInfo } from '../data/letters'
+import { LETTER_SOUNDS } from '../data/phonics'
 import { useAttempt } from './useAttempt'
 import type { ModeProps } from './types'
 import { shuffle } from '../engine/scheduler'
 import { playLetterNote } from '../audio/letterNote'
 import { sfx, unlockAudio } from '../audio/sfx'
 import { haptic } from '../audio/haptics'
-import { speak } from '../audio/speak'
+import { speak, speakSound } from '../audio/speak'
 import { cheerSmall } from '../ui/celebrate'
 import { LetterTile } from '../ui/LetterTile'
 import { Speaker } from './Speaker'
@@ -26,6 +27,9 @@ export function FirstSound({ item, onDone, seq }: ModeProps) {
   const [dead, setDead] = useState<readonly LetterId[]>([])
   const [locked, setLocked] = useState(false)
   const info = letterInfo(item.letter)
+  const sound = LETTER_SOUNDS[item.letter]
+  // X never opens a word a child knows: it is asked as an ending.
+  const ending = sound.soundWord.position === 'final'
 
   // Alternate direction per item so neither becomes a reflex.
   const pictureFirst = seq % 2 === 1
@@ -55,9 +59,10 @@ export function FirstSound({ item, onDone, seq }: ModeProps) {
 
     sfx('wrong')
     haptic('error')
-    // The second miss stretches the first sound out: "Aaaa-pple".
+    // The second miss stretches the sound out: "mmm... Moon". A stop has no
+    // honest stretched form, so for those the word itself is said slowly.
     if (tracker.misses + 1 >= 2) {
-      void speak(`${info.sound}... ${info.word}`, { rate: 0.6 })
+      void speakSound(item.letter.toLowerCase(), info.word)
     }
     setDead((list) => [...list, picked])
     tracker.registerMiss(picked)
@@ -68,7 +73,7 @@ export function FirstSound({ item, onDone, seq }: ModeProps) {
       {pictureFirst ? (
         <>
           <Speaker
-            text={`${info.word}. Which letter?`}
+            text={ending ? `${info.word}. Which letter does it end with?` : `${info.word}. Which letter?`}
             autoKey={seq}
             emoji="🔊"
             fallback={info.emoji}
@@ -97,7 +102,7 @@ export function FirstSound({ item, onDone, seq }: ModeProps) {
       ) : (
         <>
           <Speaker
-            text={`${info.lower}. ${info.lower} is for...`}
+            text={ending ? `${info.lower}. Which one ends with ${info.lower}?` : `${info.lower}. ${info.lower} is for...`}
             autoKey={seq}
             emoji="🔊"
             fallback={item.letter}

@@ -1,5 +1,7 @@
 import type { LetterId } from '../data/letters'
 import { letterInfo } from '../data/letters'
+import { graphemeDefault, graphemeInfo, type Phoneme } from '../data/phonics'
+import { WORD_BY_ID, type WordEntry } from '../data/words'
 
 /**
  * Text to speech, written around what WebKit actually does rather than what
@@ -153,4 +155,54 @@ export function speakLetterName(letter: LetterId): Promise<void> {
 /** A letter inside a sentence needs the carrier phrase to be read as a name. */
 export function letterInSentence(letter: LetterId): string {
   return `the letter, ${letterInfo(letter).lower}`
+}
+
+/**
+ * Says a sound, not a name.
+ *
+ * Continuants have an honest respelling ("mmm", "sss"). A stop has none: any
+ * attempt to voice /b/ alone produces "buh", and that schwa is exactly the
+ * habit that stops "b-a-t" from ever becoming "bat". So a stop is only ever
+ * spoken attached to the vowel that follows it in the word, and when there is
+ * no word to attach it to, the whole example word is said instead.
+ */
+export function speakSound(g: string, context?: string): Promise<void> {
+  const info = graphemeDefault(g)
+  if (!info) return speak(g)
+  if (info.say) return speak(info.say, { rate: 0.55, pitch: 1.05 })
+  if (context) return speak(context, { rate: 0.6 })
+  return speak(info.example, { rate: 0.6 })
+}
+
+/** Stretches a word out so the sounds run into each other with no gaps. */
+export function blendText(word: WordEntry): string {
+  return word.units
+    .map((unit) => {
+      const info = graphemeInfo(unit.g, unit.p)
+      return info.continuant && info.say ? info.say : unit.g
+    })
+    .join('')
+}
+
+/**
+ * The blend, as one utterance spanning the whole motion: silence in the
+ * middle is the very error being corrected, so it is never two calls.
+ */
+export function speakBlend(word: WordEntry): Promise<void> {
+  return speak(`${blendText(word)}. ${word.text}`, { rate: 0.5 })
+}
+
+export function speakWord(word: WordEntry): Promise<void> {
+  return speak(word.text, { rate: 0.75 })
+}
+
+/**
+ * Reads back a spelling the child just produced, even a wrong one: "cot".
+ * Hearing that it does not say the word is the lesson.
+ */
+export function speakSpelling(units: readonly { readonly g: string; readonly p: readonly Phoneme[] }[]): Promise<void> {
+  const text = units.map((unit) => unit.g).join('')
+  const known = WORD_BY_ID.get(text)
+  if (known) return speakWord(known)
+  return speak(text, { rate: 0.5 })
 }

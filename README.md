@@ -68,6 +68,49 @@ On automatic difficulty this tier arrives by itself: a letter reaches it once
 its half-life passes about three weeks, which in the simulation is roughly half
 of every round by week six.
 
+## From letters to reading
+
+A child who names every letter can still be unable to read "cat": c, a, t
+stay three sounds and never become a word. Five more games carry the child
+from letters into blending, gated on the sounds rather than the names.
+
+| Game | What the child does | What it trains |
+|---|---|---|
+| The missing letter | hears "cat", sees `c_t` and the picture, taps the letter | grapheme to sound, in context |
+| What does it say? | reads a word in silence, picks its picture | actual reading, the criterion task |
+| Slide it together | pushes two parts of a word into one on a rail | blending |
+| Build the word | hears a word, taps its letters in order | segmenting, and at the top level dictation |
+| The twins | six quick trials on one confusable pair, b against d | discrimination |
+
+Three things make this a reading track rather than a spelling one:
+
+- **Sounds, not names.** The old sound respellings ("buh", "kuh", "tuh") were
+  the mistake: a stop consonant cannot be voiced alone without a parasitic
+  vowel, and "buh-a-tuh" never becomes "bat". A stop is now only ever spoken
+  attached to the vowel that follows it, and the first blending words start
+  with sounds that can be held, m, s, f, n, l, r, so "mmmaaan" runs into
+  "man" with no gap. Two picture-game exemplars that taught the wrong sound
+  are gone: G is for Goat, not Giraffe, and I is for Insect, not Ice cream.
+- **The blend is one utterance.** In "Slide it together" the two pills move
+  for half a second while a single continuous utterance runs the sounds into
+  each other, and at contact the facing corners lose their radius so two pills
+  become one. Silence in the middle would be the very error being corrected.
+- **A wrong letter is read back as written.** Tap o into `c_t` and the app
+  says "cot", then the letter drops out. Nothing turns red. Hearing that it
+  does not say the word is the lesson.
+
+The dataset holds 153 words with grapheme-to-sound splits, syllables and an
+emoji each: two-sound words, 40 continuant-onset words, 31 with stop onsets,
+digraphs, two-syllable words, and consonant blends held for later. Every word
+is checked at load, and words dropped for being irregular at their stage are
+listed with the reason so nobody adds them back.
+
+A word appears only when every one of its sounds is known, and the words shown
+first are the ones that practise the child's weakest letters. Progress is
+measured on words never seen before: every word cell going solid proves
+nothing, because a child can memorise 94 word pictures, so the reading stage
+only advances on first-try accuracy over novel words.
+
 ## How the memory model works
 
 Ordinary spaced repetition (SM-2, Leitner) does not survive contact with a
