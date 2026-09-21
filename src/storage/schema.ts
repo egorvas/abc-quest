@@ -1,31 +1,19 @@
-import { isLetterId, type LetterId } from '../data/letters'
+import type { LetterId } from '../data/letters'
+import { isBuildingId } from '../data/city'
 import type { WordId } from '../data/words'
 import type { Cell } from '../engine/memory'
 import type { CellKey } from '../engine/skills'
 
 export const SCHEMA_VERSION = 2
 
-/** The three purchasable positions in a Letter Town lot. */
-export type SlotId = 'front' | 'back' | 'friend'
-export type ExtraId = 'clouds' | 'sky' | 'tram' | 'night' | 'balloons' | 'fireworks'
-export const EXTRA_IDS: readonly ExtraId[] = [
-  'clouds', 'sky', 'tram', 'night', 'balloons', 'fireworks',
-]
-
-/**
- * Everything the child has bought in the town. Nothing here can ever be
- * removed: a slot goes from absent to present and there is no other
- * transition. No coordinates either - the slot is the position.
- */
-export interface Town {
-  /** Bought slots packed per lot, "A" -> "fbr" (front, back, f-r-iend). */
-  readonly lots: Readonly<Partial<Record<LetterId, string>>>
-  readonly extras: readonly ExtraId[]
-  /** Nuts spent ever. Only grows; the purse is what was earned minus this. */
+export interface City {
+  /** Ids of everything bought, in purchase order. */
+  readonly buildings: readonly string[]
+  /** Coins spent ever. Only grows; the purse is what was earned minus this. */
   readonly spent: number
 }
 
-export const EMPTY_TOWN: Town = { lots: {}, extras: [], spent: 0 }
+export const EMPTY_CITY: City = { buildings: [], spent: 0 }
 
 /** Which shapes the exercises use. */
 export type CaseMode = 'upper' | 'lower' | 'mixed'
@@ -94,7 +82,7 @@ export interface Profile {
   readonly seeds: number
   /** Nuts earned over the profile's whole life. Only ever grows. */
   readonly seedsEarned: number
-  readonly town: Town
+  readonly city: City
   /** Stepping stones on the path. Only ever grows - missing a day costs none. */
   readonly stones: number
   readonly lastPlayDay: number
@@ -153,7 +141,7 @@ export function newProfile(name: string, avatar: string, now: number): Profile {
     introduced: [],
     seeds: 0,
     seedsEarned: 0,
-    town: EMPTY_TOWN,
+    city: EMPTY_CITY,
     stones: 0,
     lastPlayDay: -1,
     sessions: [],
@@ -190,7 +178,7 @@ export function migrate(raw: unknown): Store {
       seeds: numberOr(p.seeds, 0),
       // Everything a v1 profile earned is by definition still unspent.
       seedsEarned: numberOr(p.seedsEarned, numberOr(p.seeds, 0)),
-      town: migrateTown(p.town),
+      city: migrateCity(p.city),
       reading: migrateReading(p.reading),
       levels: migratePath(p.levels),
     }))
@@ -231,23 +219,11 @@ function numberOr(value: unknown, fallback: number): number {
     : fallback
 }
 
-/**
- * The town screen indexes into `lots` on every render, so a corrupted town
- * must come out of storage as a valid one, with anything unknown dropped.
- */
-function migrateTown(raw: unknown): Town {
-  if (!isRecord(raw)) return EMPTY_TOWN
-  const lots: Record<string, string> = {}
-  const rawLots = isRecord(raw.lots) ? raw.lots : {}
-  for (const [key, value] of Object.entries(rawLots)) {
-    if (!isLetterId(key) || typeof value !== 'string') continue
-    const slots = [...new Set([...value])].filter((c) => 'fbr'.includes(c)).join('')
-    if (slots) lots[key] = slots
-  }
-  const extras = (Array.isArray(raw.extras) ? raw.extras : []).filter(
-    (value): value is ExtraId => EXTRA_IDS.includes(value as ExtraId),
-  )
-  return { lots, extras: [...new Set(extras)], spent: numberOr(raw.spent, 0) }
+/** Unknown ids are dropped, so a renamed building never crashes the map. */
+function migrateCity(raw: unknown): City {
+  if (!isRecord(raw)) return EMPTY_CITY
+  const buildings = (Array.isArray(raw.buildings) ? raw.buildings : []).filter(isBuildingId)
+  return { buildings: [...new Set(buildings)], spent: numberOr(raw.spent, 0) }
 }
 
 function migratePath(raw: unknown): Readonly<Record<string, number>> {

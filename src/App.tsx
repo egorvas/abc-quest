@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { GameProvider, useGame } from './state/GameContext'
 import { HomeScreen } from './screens/HomeScreen'
 import { SessionScreen } from './screens/SessionScreen'
-import { TownScreen } from './screens/TownScreen'
+import { CityScreen } from './screens/CityScreen'
 import { ParentsScreen } from './screens/ParentsScreen'
 import { ProfilesScreen } from './screens/ProfilesScreen'
 import { KnownLettersScreen } from './screens/KnownLettersScreen'
@@ -10,7 +10,6 @@ import { LevelsScreen } from './screens/LevelsScreen'
 import { GamesScreen } from './screens/GamesScreen'
 import type { ModeId } from './modes/types'
 import type { LetterId } from './data/letters'
-import type { SlotId } from './storage/schema'
 import { unlockAudio } from './audio/sfx'
 import { warmUpSpeech } from './audio/speak'
 import { claimPlaybackSession, keepScreenAwake, watchAudioSession } from './audio/session'
@@ -25,7 +24,7 @@ type Route =
     }
   | { readonly name: 'levels' }
   | { readonly name: 'games' }
-  | { readonly name: 'town'; readonly open?: { readonly letter: LetterId; readonly slot: SlotId } }
+  | { readonly name: 'town'; readonly open?: string }
   | { readonly name: 'parents' }
   | { readonly name: 'profiles' }
   | { readonly name: 'known' }
@@ -75,10 +74,10 @@ function Router() {
       )
     case 'town':
       return (
-        <TownScreen
+        <CityScreen
           open={route.open}
           onBack={() => setRoute({ name: 'home' })}
-          onPlayLetter={(letter) => setRoute({ name: 'session', focus: letter })}
+          onPlay={() => setRoute({ name: 'home' })}
         />
       )
     case 'parents':

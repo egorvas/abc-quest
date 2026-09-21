@@ -1,6 +1,6 @@
 import { LEVEL_COUNT, TIERS, tierOf, type Tier } from '../data/levels'
 import type { Profile } from '../storage/schema'
-import { grantWholeTown } from './town'
+import { grantWholeCity } from './city'
 import { TUNING } from './tuning'
 
 /**
@@ -71,7 +71,7 @@ export function finishLevel(profile: Profile, n: number, stars: number): Profile
     ...profile,
     levels: { ...profile.levels, [String(n)]: Math.max(previous, stars) },
   }
-  return allLevelsDone(next) ? grantWholeTown(next) : next
+  return allLevelsDone(next) ? grantWholeCity(next) : next
 }
 
 /** Parent-side: marks the next `count` levels as passed with one star, no coins. */
@@ -84,7 +84,7 @@ export function skipLevels(profile: Profile, count: number): Profile {
     skipped += 1
   }
   const next = { ...profile, levels }
-  return allLevelsDone(next) ? grantWholeTown(next) : next
+  return allLevelsDone(next) ? grantWholeCity(next) : next
 }
 
 /** Parent-side: back to level one. The town and the coins are kept. */

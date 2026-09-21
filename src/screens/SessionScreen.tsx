@@ -21,10 +21,10 @@ import { Button } from '../ui/Button'
 import { SessionProgress, type StepMark } from '../ui/SessionProgress'
 import { RoundEnd } from '../ui/RoundEnd'
 import { nutsForRound, type NutAward } from '../engine/nuts'
-import { nextPurchase } from '../engine/town'
+import { nextPurchase } from '../engine/city'
 import { TUNING } from '../engine/tuning'
 import type { LetterId } from '../data/letters'
-import type { Profile, SlotId } from '../storage/schema'
+import type { Profile } from '../storage/schema'
 import { levelSpec } from '../data/levels'
 import { preload, roundClipIds } from '../audio/voice'
 import { coinsForLevel, isPassed, nextLevelAfter, starsFor, starsOf } from '../engine/levels'
@@ -54,7 +54,7 @@ interface SessionScreenProps {
   /** A numbered level: its letters, games and words replace the free mix. */
   readonly level?: number
   readonly onHome: () => void
-  readonly onTown: (open?: { readonly letter: LetterId; readonly slot: SlotId }) => void
+  readonly onTown: (open?: string) => void
   readonly onLevel: (n: number) => void
   readonly onLevels: () => void
 }
@@ -210,7 +210,7 @@ export function SessionScreen({
 
   if (award) {
     // The purse has already been updated by closeRound by the time this renders.
-    const target = nextPurchase(profile, Date.now())
+    const target = nextPurchase(profile)
     const next = spec ? nextLevelAfter(profile, spec.n) : null
     return (
       <RoundEnd

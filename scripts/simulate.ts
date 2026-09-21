@@ -21,7 +21,7 @@ import {
 } from '../src/engine/apply'
 import { allStatuses, masteredCount } from '../src/engine/mastery'
 import { nutsForRound } from '../src/engine/nuts'
-import { buyItem, nextPurchase, townCompletion } from '../src/engine/town'
+import { buyBuilding, nextPurchase, cityCompletion } from '../src/engine/city'
 import { newProfile, type Profile } from '../src/storage/schema'
 import { LETTER_IDS } from '../src/data/letters'
 import { MODES } from '../src/modes/registry'
@@ -132,9 +132,9 @@ function play(): void {
   )
   // The synthetic child spends like a real one: whatever is buyable, at once.
   for (let guard = 0; guard < 4; guard += 1) {
-    const target = nextPurchase(profile, now)
+    const target = nextPurchase(profile)
     if (!target) break
-    profile = buyItem(profile, target.letter, target.slot, now)
+    profile = buyBuilding(profile, target)
   }
 }
 
@@ -158,7 +158,7 @@ for (let day = 1; day <= days; day += 1) {
   rows.push(
     `day ${String(day).padStart(2)}  introduced ${String(profile.introduced.length).padStart(2)}` +
       `  learning ${String(learning).padStart(2)}  strong ${String(strong).padStart(2)}` +
-      `  mastered ${String(mastered).padStart(2)}  nuts earned ${String(profile.seedsEarned).padStart(3)}  town ${townCompletion(profile.town).owned}/78`,
+      `  mastered ${String(mastered).padStart(2)}  nuts earned ${String(profile.seedsEarned).padStart(3)}  city ${cityCompletion(profile).owned}/${cityCompletion(profile).total}`,
   )
   // Next day.
   now = profile.createdAt + day * DAY_MS + 16 * 60 * 60 * 1000

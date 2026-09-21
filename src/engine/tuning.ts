@@ -188,8 +188,8 @@ export const TUNING = {
     twoStars: 0.7,
     threeStars: 0.9,
     /** Coins for a first pass, plus this much per star. */
-    firstPass: 4,
-    perStar: 2,
+    firstPass: 2,
+    perStar: 1,
     /** A replay that gains no star still pays a token. */
     replay: 1,
   },

@@ -1,6 +1,4 @@
 import { useEffect, useState } from 'react'
-import type { LetterId } from '../data/letters'
-import type { SlotId } from '../storage/schema'
 import { BONUS_ICON, type NutAward } from '../engine/nuts'
 import { Screen } from './Screen'
 import { Button } from './Button'
@@ -16,13 +14,14 @@ interface RoundEndProps {
   readonly total: number
   /** The purse after the award has been added. */
   readonly purse: number
-  readonly spendTarget: { readonly letter: LetterId; readonly slot: SlotId } | null
+  /** The building the Spend button jumps to, if anything is buyable. */
+  readonly spendTarget: string | null
   /** A level's verdict. Absent in practice. */
   readonly level?: { readonly n: number; readonly passed: boolean; readonly stars: number }
   readonly nextLevel?: number | null
   readonly onAgain: () => void
   readonly onHome: () => void
-  readonly onTown: (open?: { readonly letter: LetterId; readonly slot: SlotId }) => void
+  readonly onTown: (open?: string) => void
   /** Continues the climb: the next level, or the map when it is finished. */
   readonly onNext?: () => void
 }

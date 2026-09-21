@@ -3,7 +3,6 @@ import type { Profile } from '../storage/schema'
 import { dayIndex } from './memory'
 import { letterStatus } from './mastery'
 import { cellsOf } from './skills'
-import { seedsForRound } from './garden'
 import { TUNING } from './tuning'
 
 /**
@@ -47,6 +46,15 @@ interface RoundFacts {
   readonly letters: readonly LetterId[]
   /** A passed level pays its own base instead of the accuracy scale. */
   readonly levelCoins?: number
+}
+
+/** One to three coins for a practice-style round, on accuracy. */
+export function seedsForRound(correct: number, total: number): number {
+  if (total === 0) return TUNING.seedsPerSession.min
+  const ratio = correct / total
+  if (ratio >= 0.85) return TUNING.seedsPerSession.max
+  if (ratio >= 0.6) return 2
+  return TUNING.seedsPerSession.min
 }
 
 export function nutsForRound(

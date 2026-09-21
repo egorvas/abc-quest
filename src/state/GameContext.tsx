@@ -8,8 +8,8 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import type { ExtraId, Profile, Settings, SlotId, Store } from '../storage/schema'
-import { buyExtra as buyExtraItem, buyItem } from '../engine/town'
+import type { Profile, Settings, Store } from '../storage/schema'
+import { buyBuilding } from '../engine/city'
 import { newProfile } from '../storage/schema'
 import {
   activeProfile,
@@ -48,9 +48,8 @@ interface GameValue {
   readonly skipLevels: (count: number) => void
   readonly restartLevels: () => void
   readonly closeRound: (result: RoundResult) => void
-  /** Buys and places a Letter Town item. A refused purchase changes nothing. */
-  readonly buy: (letter: LetterId, slot: SlotId) => void
-  readonly buyExtra: (extra: ExtraId) => void
+  /** Buys and places a city building. A refused purchase changes nothing. */
+  readonly buy: (id: string) => void
   readonly importStore: (store: Store) => void
 }
 
@@ -133,9 +132,7 @@ export function GameProvider({ children }: { readonly children: ReactNode }) {
       restartLevels: () => patchProfile((current) => restartLevels(current)),
       closeRound: (result) =>
         patchProfile((current) => finishRound(current, result, Date.now())),
-      buy: (letter, slot) =>
-        patchProfile((current) => buyItem(current, letter, slot, Date.now())),
-      buyExtra: (extra) => patchProfile((current) => buyExtraItem(current, extra)),
+      buy: (id) => patchProfile((current) => buyBuilding(current, id)),
       importStore: (next) => setStore(next),
     }),
     [store, profile, saveFailed, patchProfile],

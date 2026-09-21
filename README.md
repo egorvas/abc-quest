@@ -11,27 +11,28 @@ any text: a child who cannot read yet navigates by icons.
 
 ## Levels
 
-Sixty numbered levels, each one round, each harder than the last. Level 1 is
-three letters and two easy games; level 60 is expert reading. Passing a level
-is the only thing that opens the next, and what is behind a door is not
-written on it: the games change from level to level and the child finds out
-by opening it. Seven tiers give the climb its shape:
+A hundred and fifty short numbered levels, each one round of six to eight
+questions, each harder than the last. Level 1 is two letters and two easy
+games; level 150 is expert reading. Passing a level is the only thing that
+opens the next, and what is behind a door is not written on it: the games
+change from level to level and the child finds out by opening it. Seven tiers
+give the climb its shape, and most of it is reading:
 
 | Levels | Tier | What it asks |
 |---|---|---|
-| 1–12 | Letters | meet the alphabet, three to two letters at a time, recognise then type and trace |
-| 13–18 | Sounds | the sound every letter makes |
-| 19–26 | Blending | slide sounds into `s-u-n`, fill the missing letter, pick the picture |
-| 27–36 | Words | read and build short words, harder options each level |
-| 37–42 | Two letters, one sound | `sh`, `ch`, `ck`, `ng` |
-| 43–48 | Syllables | two-part words joined by parts: `rab-bit` |
-| 49–60 | Master reader | everything mixed, expert difficulty |
+| 1–20 | Letters | meet the alphabet, one or two letters at a time, recognise then type and trace |
+| 21–32 | Sounds | the sound every letter makes |
+| 33–56 | Blending | slide sounds into `s-u-n`, fill the missing letter, pick the picture |
+| 57–90 | Words | read and build short words, harder options each level |
+| 91–110 | Two letters, one sound | `sh`, `ch`, `ck`, `ng` |
+| 111–130 | Syllables | two-part words joined by parts: `rab-bit` |
+| 131–150 | Master reader | everything mixed, expert difficulty |
 
 A level is passed with at least half the answers right first time; below
 that it says "Almost!" and asks to be tried again. Stars (1 to 3 at 50 / 70 /
 90%) are never taken away, and replaying can only raise them. A first pass
-pays 4 coins plus 2 per star; a replay pays 2 per new star, or 1. Passing all
-sixty opens the whole of Letter Town at once.
+pays 2 coins plus 1 per star; a replay pays 1 per new star, or 1. Passing all
+hundred and fifty builds the whole city at once.
 
 The recipe of a level is derived from its number with a seeded generator, so
 it is the same on every device and every replay. A parent can skip ahead from
@@ -203,59 +204,30 @@ The star is never taken back. It only dulls and asks to be polished.
 
 Introduction order: `S O D I M R T U L A G N E W F K Z Y X B J C Q V H P`.
 
-## Rewards
+## Rewards: the city
 
-Three horizons rather than confetti on every answer:
+Coins build a city on a map. Forty-four things are for sale - houses, an ice
+cream stand, roads and street lights, a school, a hospital, a fire station,
+the town hall, a zoo, a ferris wheel, a rollercoaster, a stadium, a train
+station, a tram, a TV tower, a castle, a rocket, a bridge across the river
+and, beyond it, a lighthouse, a harbour, a beach and an airport. Each stands
+on the map as a sign with its price until it is bought; things further up the
+climb are locked until enough levels are passed, and everything across the
+river needs the bridge first. Prices add up to a little less than the coins
+the levels pay.
 
-1. **The letter's note** on every answer. Pitch follows the position in the
-   alphabet, `A` low and `Z` high, on a pentatonic scale so nothing can sound
-   wrong.
-2. **Coins** at the end of a round: one burst of confetti, one to three coins for
-   accuracy, and itemised bonuses that drop in with their own icon so a child
-   who cannot read learns what earns what: ⭐ +7 for a letter that went gold
-   during the round, ✍️ +3 the first time a letter is written or typed
-   unaided, 👋 +2 for coming back after a few days away, ☀️ +1 on the first
-   round of a day, 🎁 +1 at random. The very first round always pays at least
-   3, the price of the cheapest thing in the town.
-3. **Letter Town**, where the coins go.
+The city is alive. Cars, a bus, a fire engine and a police car drive the
+roads that exist; the tram runs once bought; the train runs when there is a
+station; boats sail the river once there is a harbour; the plane takes off
+from the airport; the ferris wheel turns, the fountain splashes, the zoo
+animals peek, the lighthouse beam sweeps, balloons rise, chimneys smoke,
+clouds drift and birds cross the sky. At night (real time, or the toggle)
+the windows glow, the street lights come on, the stars come out and the
+fireworks fire on their own. Tapping anything owned bounces it and says its
+name; tapping the rocket launches it.
 
-### Letter Town
-
-Twenty-six lots on one street, A to Z, one per letter. Each lot has three
-things to buy, and every one of them is a word that starts with the lot's
-letter: the front item is the app's own "A is for Apple" word, the back item
-is a building or landmark (Bridge, Castle, Volcano), the friend is a creature
-that bobs (Bear, Dolphin, Unicorn). Price order is gate order: the front opens
-when the letter is introduced and costs 3, the back needs the letter's garden
-bed to flower and costs 5, the friend needs the gold star and costs 7, which is
-exactly what the star pays. Mastering a letter hands the child the coins for
-the one creature that only mastery unlocks.
-
-There is no shop screen. Tapping a lot opens that lot; tapping a price buys the
-item and places it, with no drag and no way to put the bear in the wrong lot.
-The round-end screen has one amber button that jumps straight to the cheapest
-thing the child can buy, so it is one tap from finishing a round to owning
-something.
-
-Six town-wide extras (clouds, a sky that follows the real time of day, a tram,
-night mode, balloons, fireworks on tap) are gated on levels passed rather than on
-letters, at 10 coins each.
-
-Nothing in the town can ever be lost, sold or moved. The purse goes down when
-the child buys, but a second counter of coins ever earned only climbs, and every
-gold star flies a lettered balloon over its lot forever. The child never sees a
-completion count; the parent screen shows it. One lot on the street breathes
-slowly, the weakest letter with something still to buy, and inside any lot
-there is a button to play a round aimed at that letter. That is the only
-"go and practise" in the whole town, and the child pressed it.
-
-The garden still exists inside each lot as the plant that grows on its own from
-memory strength. It never wilts and asks for nothing while the child is away.
-The stepping-stone path only grows longer, so a missed day is not an event.
-
-In the simulation a child who knows twenty letters earns about 380 coins in
-three weeks and finishes 76 of the 78 items; finishing the alphabet and
-finishing the town land within days of each other.
+Nothing in the city can ever be lost, sold or moved. The purse goes down when
+the child buys, but a second counter of coins ever earned only climbs.
 
 ## Being gentle
 
@@ -278,7 +250,7 @@ extra is stored to produce the dashboard.
 
 - Keys `abcq:store` and `abcq:store:bak`, the second copy in case a write is
   interrupted.
-- Several profiles on one iPad: each child has their own garden.
+- Several profiles on one iPad: each child has their own city.
 - A whole profile is a few dozen KB, far from Safari's quota.
 - **Safari on iOS erases site data after about seven days without opening it.**
   Add the page to the home screen and use "Save a copy" in the grown-ups

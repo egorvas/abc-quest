@@ -8,7 +8,7 @@ import { SKILLS, SKILL_IDS, cellKey } from '../engine/skills'
 import { NEW_CELL, recall } from '../engine/memory'
 import { migrate } from '../storage/schema'
 import { storeSizeBytes, storageIsPersistent } from '../storage/store'
-import { townCompletion } from '../engine/town'
+import { cityCompletion } from '../engine/city'
 import { speechRecognitionSupported } from '../speech/recognizer'
 import { ttsSupported } from '../audio/speak'
 import { LEVEL_COUNT, currentLevel, levelsDone, tierOf } from '../engine/levels'
@@ -173,8 +173,8 @@ export function ParentsScreen({ onBack, onEditKnown }: ParentsScreenProps) {
               <span>right first time</span>
             </div>
             <div className="pstat">
-              <b>{townCompletion(profile.town).owned}/{townCompletion(profile.town).total}</b>
-              <span>town built</span>
+              <b>{cityCompletion(profile).owned}/{cityCompletion(profile).total}</b>
+              <span>city built</span>
             </div>
             <div className="pstat">
               <b>{profile.seedsEarned}</b>
@@ -252,8 +252,8 @@ export function ParentsScreen({ onBack, onEditKnown }: ParentsScreenProps) {
             count as passed with one star and pay no coins.
           </p>
           <div className="pcard__actions">
-            <Button onPress={() => skipLevels(5)} tone="amber" size="sm">
-              ⏩ Skip 5 levels
+            <Button onPress={() => skipLevels(10)} tone="amber" size="sm">
+              ⏩ Skip 10 levels
             </Button>
             <Button onPress={() => skipLevels(1)} tone="ghost" size="sm">
               ⏩ Skip 1
