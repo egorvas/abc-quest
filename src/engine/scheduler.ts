@@ -31,6 +31,12 @@ export interface BuildOptions {
   readonly caseMode: CaseMode
   readonly letterPool: LetterPool
   readonly difficulty: Difficulty
+  /**
+   * A letter the child asked to practise, from its lot in the town. It takes
+   * roughly forty percent of the round; the rest is the usual mix, because a
+   * round that is all one letter is drilling, and drilling is boring.
+   */
+  readonly focus?: LetterId
 }
 
 export interface SessionPlan {
@@ -399,6 +405,32 @@ export function shuffle<T>(input: readonly T[]): T[] {
   return array
 }
 
+/**
+ * Gives a chosen letter its share of the round. Replaces items from the end
+ * of the pick, never the opening easy wins, and never touches a round in
+ * which the letter does not exist yet.
+ */
+function applyFocus(
+  picked: readonly Candidate[],
+  candidates: readonly Candidate[],
+  focus: LetterId | undefined,
+): readonly Candidate[] {
+  if (!focus) return picked
+  const candidate = candidates.find((c) => c.letter === focus)
+  if (!candidate) return picked
+  const wanted = Math.round(picked.length * TUNING.town.focusShare)
+  const have = picked.filter((c) => c.letter === focus).length
+  if (have >= wanted) return picked
+  const result = [...picked]
+  let toReplace = wanted - have
+  for (let i = result.length - 1; i >= 0 && toReplace > 0; i -= 1) {
+    if (result[i].letter === focus) continue
+    result[i] = candidate
+    toReplace -= 1
+  }
+  return result
+}
+
 /** Spreads repeats apart and puts safe items at the start and the end. */
 function arrange(picked: readonly Candidate[]): readonly Candidate[] {
   const easy = picked.filter((c) => c.bucket === 'easy')
@@ -522,7 +554,7 @@ export function buildSession(
     guard += 1
   }
 
-  const arranged = arrange(picked.slice(0, length))
+  const arranged = arrange(applyFocus(picked.slice(0, length), candidates, options.focus))
 
   const items = arranged.map((candidate, index): SessionItem => {
     const mode = MODES[candidate.modeId]

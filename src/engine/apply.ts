@@ -112,14 +112,17 @@ export interface RoundResult {
   readonly assisted: number
   readonly seconds: number
   readonly letters: readonly LetterId[]
-  readonly seeds: number
+  /** What the round pays, computed by nutsForRound before the screen shows it. */
+  readonly nuts: number
 }
 
 /**
- * Closes a round: history, seeds, and the stepping-stone path.
+ * Closes a round: history, nuts, and the stepping-stone path.
  *
- * The path only ever grows. A missed day is not an event in this app - there
- * is no streak to break, so there is nothing to feel bad about on returning.
+ * The purse and the lifetime total both grow here; only a purchase ever
+ * lowers the purse. The path only ever grows too. A missed day is not an
+ * event in this app - there is no streak to break, so there is nothing to
+ * feel bad about on returning.
  */
 export function finishRound(
   profile: Profile,
@@ -140,7 +143,8 @@ export function finishRound(
   return {
     ...profile,
     confusion: decayConfusions(profile.confusion),
-    seeds: profile.seeds + result.seeds,
+    seeds: profile.seeds + result.nuts,
+    seedsEarned: profile.seedsEarned + result.nuts,
     stones: newDay ? profile.stones + 1 : profile.stones,
     lastPlayDay: today,
     sessions: [summary, ...profile.sessions].slice(0, TUNING.historyLimit),

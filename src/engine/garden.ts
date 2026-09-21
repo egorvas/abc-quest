@@ -1,5 +1,4 @@
 import type { LetterId } from '../data/letters'
-import { letterInfo } from '../data/letters'
 import type { Profile, BedStage } from '../storage/schema'
 import { letterStatus } from './mastery'
 import { cellKey } from './skills'
@@ -37,7 +36,6 @@ const STAGE_GLYPH: Record<BedStage, string> = {
 
 export function bedFor(profile: Profile, letter: LetterId, now: number): Bed {
   const status = letterStatus(profile, letter, now)
-  const info = letterInfo(letter)
 
   const spot = profile.cells[cellKey(letter, 'spot', 'upper')] ?? NEW_CELL
   const prodUpper = profile.cells[cellKey(letter, 'prod', 'upper')] ?? NEW_CELL
@@ -60,12 +58,9 @@ export function bedFor(profile: Profile, letter: LetterId, now: number): Bed {
           ? 'Needs confident recognition'
           : 'Not started yet'
 
-  return {
-    letter,
-    stage,
-    emoji: stage === 3 ? info.emoji : STAGE_GLYPH[stage],
-    nextHint,
-  }
+  // The word emoji now lives in the town, as the cheapest thing a lot can
+  // buy. The garden signals growth only, so a full-grown bed is a tree.
+  return { letter, stage, emoji: STAGE_GLYPH[stage], nextHint }
 }
 
 export function gardenOf(

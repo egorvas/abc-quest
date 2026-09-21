@@ -8,6 +8,7 @@ import { SKILLS, SKILL_IDS, cellKey } from '../engine/skills'
 import { NEW_CELL, recall } from '../engine/memory'
 import { migrate } from '../storage/schema'
 import { storeSizeBytes, storageIsPersistent } from '../storage/store'
+import { townCompletion } from '../engine/town'
 import { speechRecognitionSupported } from '../speech/recognizer'
 import { ttsSupported } from '../audio/speak'
 import './ParentsScreen.css'
@@ -169,6 +170,14 @@ export function ParentsScreen({ onBack, onEditKnown }: ParentsScreenProps) {
             <div className="pstat">
               <b>{totalItems === 0 ? '—' : `${Math.round((totalCorrect / totalItems) * 100)}%`}</b>
               <span>right first time</span>
+            </div>
+            <div className="pstat">
+              <b>{townCompletion(profile.town).owned}/{townCompletion(profile.town).total}</b>
+              <span>town built</span>
+            </div>
+            <div className="pstat">
+              <b>{profile.seedsEarned}</b>
+              <span>nuts earned</span>
             </div>
           </div>
         </section>

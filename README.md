@@ -132,14 +132,52 @@ Three horizons rather than confetti on every answer:
 1. **The letter's note** on every answer. Pitch follows the position in the
    alphabet, `A` low and `Z` high, on a pentatonic scale so nothing can sound
    wrong.
-2. **Seeds** at the end of a round: one burst of confetti and one to three
-   seeds.
-3. **The garden**, 26 plots. The top stage of a plot cannot be reached by
-   tapping: it needs spoken or written evidence.
+2. **Nuts** at the end of a round: one burst of confetti, one to three nuts for
+   accuracy, and itemised bonuses that drop in with their own icon so a child
+   who cannot read learns what earns what: ⭐ +7 for a letter that went gold
+   during the round, ✍️ +3 the first time a letter is written or typed
+   unaided, 👋 +2 for coming back after a few days away, ☀️ +1 on the first
+   round of a day, 🎁 +1 at random. The very first round always pays at least
+   3, the price of the cheapest thing in the town.
+3. **Letter Town**, where the nuts go.
 
-The garden never wilts, never gets hungry and asks for nothing while the child
-is away. The stepping-stone path only grows longer, so a missed day is not an
-event.
+### Letter Town
+
+Twenty-six lots on one street, A to Z, one per letter. Each lot has three
+things to buy, and every one of them is a word that starts with the lot's
+letter: the front item is the app's own "A is for Apple" word, the back item
+is a building or landmark (Bridge, Castle, Volcano), the friend is a creature
+that bobs (Bear, Dolphin, Unicorn). Price order is gate order: the front opens
+when the letter is introduced and costs 3, the back needs the letter's garden
+bed to flower and costs 5, the friend needs the gold star and costs 7, which is
+exactly what the star pays. Mastering a letter hands the child the nuts for
+the one creature that only mastery unlocks.
+
+There is no shop screen. Tapping a lot opens that lot; tapping a price buys the
+item and places it, with no drag and no way to put the bear in the wrong lot.
+The round-end screen has one amber button that jumps straight to the cheapest
+thing the child can buy, so it is one tap from finishing a round to owning
+something.
+
+Six town-wide extras (clouds, a sky that follows the real time of day, a tram,
+night mode, balloons, fireworks on tap) are gated on days played rather than on
+letters, at 10 nuts each.
+
+Nothing in the town can ever be lost, sold or moved. The purse goes down when
+the child buys, but a second counter of nuts ever earned only climbs, and every
+gold star flies a lettered balloon over its lot forever. The child never sees a
+completion count; the parent screen shows it. One lot on the street breathes
+slowly, the weakest letter with something still to buy, and inside any lot
+there is a button to play a round aimed at that letter. That is the only
+"go and practise" in the whole town, and the child pressed it.
+
+The garden still exists inside each lot as the plant that grows on its own from
+memory strength. It never wilts and asks for nothing while the child is away.
+The stepping-stone path only grows longer, so a missed day is not an event.
+
+In the simulation a child who knows twenty letters earns about 380 nuts in
+three weeks and finishes 76 of the 78 items; finishing the alphabet and
+finishing the town land within days of each other.
 
 ## Being gentle
 

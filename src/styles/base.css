@@ -117,3 +117,10 @@ textarea {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Something new landing on screen: a bought item, a badge, a reward. */
+@keyframes done-pop {
+  0% { transform: scale(0.2) rotate(-25deg); opacity: 0; }
+  70% { transform: scale(1.15) rotate(6deg); }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}

@@ -1,0 +1,90 @@
+.done__nuts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  max-width: 420px;
+  min-height: 52px;
+  font-size: 40px;
+  line-height: 1;
+}
+
+.done__nut {
+  position: relative;
+  animation: done-drop 0.5s ease backwards;
+}
+
+.done__nut em {
+  position: absolute;
+  right: -8px;
+  bottom: -6px;
+  font-style: normal;
+  font-family: var(--font-ui);
+  font-weight: 900;
+  font-size: 15px;
+  color: var(--amber);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+.done__nut--sum {
+  font-size: 34px;
+  font-family: var(--font-ui);
+  font-weight: 900;
+}
+
+.done__purse {
+  margin: 0;
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gold {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.gold__glyph {
+  font-family: var(--font-letter);
+  font-weight: 800;
+  font-size: min(48vh, 60vw);
+  line-height: 1;
+  background: linear-gradient(160deg, #fde68a, #f59e0b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 8px 0 rgba(0, 0, 0, 0.3));
+  animation: done-pop 0.8s ease;
+}
+
+.gold__star {
+  font-size: 64px;
+  line-height: 1;
+  animation: gold-spin 1.6s ease-in-out infinite;
+}
+
+.gold__hint {
+  margin-top: 12px;
+  color: var(--ink-faint);
+  font-size: 16px;
+}
+
+@keyframes gold-spin {
+  0%, 100% { transform: rotate(-10deg) scale(1); }
+  50% { transform: rotate(10deg) scale(1.15); }
+}
+
+/* Leave room for the nuts and three buttons on a portrait iPad. */
+.session--done .done__badge {
+  font-size: clamp(56px, 11vh, 96px);
+}
+
+.session--done .done__actions {
+  flex-direction: column;
+  align-items: stretch;
+  width: min(360px, 100%);
+}

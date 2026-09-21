@@ -59,11 +59,6 @@
   color: var(--ink-faint);
 }
 
-@keyframes done-pop {
-  0% { transform: scale(0.2) rotate(-25deg); opacity: 0; }
-  70% { transform: scale(1.15) rotate(6deg); }
-  100% { transform: scale(1) rotate(0); opacity: 1; }
-}
 
 @keyframes done-drop {
   0% { transform: translateY(-40px) scale(0.5); opacity: 0; }

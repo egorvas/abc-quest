@@ -14,11 +14,12 @@ import { FirstSound } from '../modes/FirstSound'
 import { Screen, TopBar } from '../ui/Screen'
 import { Button } from '../ui/Button'
 import { SessionProgress, type StepMark } from '../ui/SessionProgress'
-import { seedsForRound } from '../engine/garden'
-import { cheerBig } from '../ui/celebrate'
-import { sfx } from '../audio/sfx'
+import { RoundEnd } from '../ui/RoundEnd'
+import { nutsForRound, type NutAward } from '../engine/nuts'
+import { nextPurchase } from '../engine/town'
 import { TUNING } from '../engine/tuning'
 import type { LetterId } from '../data/letters'
+import type { Profile, SlotId } from '../storage/schema'
 import './SessionScreen.css'
 
 const RENDERERS = {
@@ -35,7 +36,10 @@ const RENDERERS = {
 interface SessionScreenProps {
   /** Empty means the mixed adventure across all modes. */
   readonly modeIds?: readonly ModeId[]
-  readonly onExit: () => void
+  /** A letter the child chose to practise from its lot in the town. */
+  readonly focus?: LetterId
+  readonly onHome: () => void
+  readonly onTown: (open?: { readonly letter: LetterId; readonly slot: SlotId }) => void
 }
 
 /**
@@ -45,20 +49,25 @@ interface SessionScreenProps {
  * on what actually happens: a mistake is always followed by something the
  * child can do, and the round never ends on a failure.
  */
-export function SessionScreen({ modeIds, onExit }: SessionScreenProps) {
+export function SessionScreen({ modeIds, focus, onHome, onTown }: SessionScreenProps) {
   const { profile, recordAttempt, introduce, closeRound } = useGame()
   const [queue, setQueue] = useState<readonly SessionItem[]>([])
   const [index, setIndex] = useState(0)
   const [marks, setMarks] = useState<readonly StepMark[]>([])
-  const [done, setDone] = useState(false)
+  const [award, setAward] = useState<NutAward | null>(null)
   const stats = useRef({ correct: 0, assisted: 0, letters: new Set<LetterId>() })
   const startedAt = useRef(Date.now())
-  const [seeds, setSeeds] = useState(0)
+  // The profile as it was when the round began: the star and first-write
+  // bonuses are a before/after comparison, kept out of the memory model.
+  const before = useRef<Profile | null>(null)
+  const latest = useRef<Profile | null>(profile)
+  latest.current = profile
 
   const startRound = useCallback(() => {
     if (!profile) return
     const plan = buildSession(profile, Date.now(), {
       modeIds,
+      focus,
       micAvailable: profile.settings.micEnabled && speechRecognitionSupported(),
       caseMode: profile.settings.caseMode,
       letterPool: profile.settings.letterPool,
@@ -68,9 +77,10 @@ export function SessionScreen({ modeIds, onExit }: SessionScreenProps) {
     setQueue(plan.items)
     setMarks(plan.items.map((_, i) => (i === 0 ? 'current' : 'pending')))
     setIndex(0)
-    setDone(false)
+    setAward(null)
     stats.current = { correct: 0, assisted: 0, letters: new Set() }
     startedAt.current = Date.now()
+    before.current = profile
     if (plan.introduced.length > 0) introduce(plan.introduced)
     // The plan is a snapshot: rebuilding mid-round would change the questions
     // under the child's finger.
@@ -82,20 +92,24 @@ export function SessionScreen({ modeIds, onExit }: SessionScreenProps) {
   }, [startRound])
 
   const finish = useCallback(() => {
-    const total = queue.length
-    const correct = stats.current.correct
-    const earned = seedsForRound(correct, total)
-    setSeeds(earned)
-    setDone(true)
-    cheerBig()
-    sfx('levelUp')
-    closeRound({
-      items: total,
-      correct,
-      assisted: stats.current.assisted,
-      seconds: Math.round((Date.now() - startedAt.current) / 1000),
+    const after = latest.current
+    const start = before.current
+    if (!after || !start) return
+    const now = Date.now()
+    const facts = {
+      items: queue.length,
+      correct: stats.current.correct,
       letters: [...stats.current.letters],
-      seeds: earned,
+    }
+    const earned = nutsForRound(start, after, facts, now)
+    setAward(earned)
+    closeRound({
+      items: facts.items,
+      correct: facts.correct,
+      assisted: stats.current.assisted,
+      seconds: Math.round((now - startedAt.current) / 1000),
+      letters: facts.letters,
+      nuts: earned.total,
     })
   }, [queue.length, closeRound])
 
@@ -151,38 +165,27 @@ export function SessionScreen({ modeIds, onExit }: SessionScreenProps) {
 
   if (!profile) return null
 
-  if (done) {
+  if (award) {
+    // The purse has already been updated by closeRound by the time this renders.
+    const target = nextPurchase(profile, Date.now())
     return (
-      <Screen className="session session--done">
-        <div className="done">
-          <div className="done__badge">🌟</div>
-          <h1 className="done__title">Well done!</h1>
-          <p className="done__line">
-            Right first time: {stats.current.correct} of {queue.length}
-          </p>
-          <div className="done__seeds">
-            {Array.from({ length: seeds }, (_, i) => (
-              <span key={i} className="done__seed">🌰</span>
-            ))}
-          </div>
-          <p className="done__hint">Your seeds went to the garden</p>
-          <div className="done__actions">
-            <Button onPress={startRound} size="lg" tone="primary">
-              ▶︎ Again
-            </Button>
-            <Button onPress={onExit} size="lg" tone="mint">
-              Garden 🌱
-            </Button>
-          </div>
-        </div>
-      </Screen>
+      <RoundEnd
+        award={award}
+        correct={stats.current.correct}
+        total={queue.length}
+        purse={profile.seeds}
+        spendTarget={target}
+        onAgain={startRound}
+        onHome={onHome}
+        onTown={onTown}
+      />
     )
   }
 
   if (!item || !Renderer) {
     return (
       <Screen className="session">
-        <TopBar left={<Button size="sm" tone="ghost" onPress={onExit}>🏠</Button>} />
+        <TopBar left={<Button size="sm" tone="ghost" onPress={onHome}>🏠</Button>} />
         <div className="session__empty">
           <p>Getting things ready...</p>
         </div>
@@ -194,7 +197,7 @@ export function SessionScreen({ modeIds, onExit }: SessionScreenProps) {
     <Screen className="session">
       <TopBar
         left={
-          <Button size="sm" tone="ghost" onPress={onExit} ariaLabel="Home">
+          <Button size="sm" tone="ghost" onPress={onHome} ariaLabel="Home">
             🏠
           </Button>
         }

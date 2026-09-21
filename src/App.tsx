@@ -2,19 +2,21 @@ import { useEffect, useState } from 'react'
 import { GameProvider, useGame } from './state/GameContext'
 import { HomeScreen } from './screens/HomeScreen'
 import { SessionScreen } from './screens/SessionScreen'
-import { GardenScreen } from './screens/GardenScreen'
+import { TownScreen } from './screens/TownScreen'
 import { ParentsScreen } from './screens/ParentsScreen'
 import { ProfilesScreen } from './screens/ProfilesScreen'
 import { KnownLettersScreen } from './screens/KnownLettersScreen'
 import type { ModeId } from './modes/types'
+import type { LetterId } from './data/letters'
+import type { SlotId } from './storage/schema'
 import { unlockAudio } from './audio/sfx'
 import { warmUpSpeech } from './audio/speak'
 import { claimPlaybackSession, keepScreenAwake, watchAudioSession } from './audio/session'
 
 type Route =
   | { readonly name: 'home' }
-  | { readonly name: 'session'; readonly modeIds?: readonly ModeId[] }
-  | { readonly name: 'garden' }
+  | { readonly name: 'session'; readonly modeIds?: readonly ModeId[]; readonly focus?: LetterId }
+  | { readonly name: 'town'; readonly open?: { readonly letter: LetterId; readonly slot: SlotId } }
   | { readonly name: 'parents' }
   | { readonly name: 'profiles' }
   | { readonly name: 'known' }
@@ -65,13 +67,19 @@ function Router() {
       return (
         <SessionScreen
           modeIds={route.modeIds}
-          onExit={() =>
-            setRoute(route.modeIds ? { name: 'home' } : { name: 'garden' })
-          }
+          focus={route.focus}
+          onHome={() => setRoute({ name: 'home' })}
+          onTown={(open) => setRoute({ name: 'town', open })}
         />
       )
-    case 'garden':
-      return <GardenScreen onBack={() => setRoute({ name: 'home' })} />
+    case 'town':
+      return (
+        <TownScreen
+          open={route.open}
+          onBack={() => setRoute({ name: 'home' })}
+          onPlayLetter={(letter) => setRoute({ name: 'session', focus: letter })}
+        />
+      )
     case 'parents':
       return (
         <ParentsScreen
@@ -94,7 +102,7 @@ function Router() {
         <HomeScreen
           onPlay={() => setRoute({ name: 'session' })}
           onPickMode={(modeId) => setRoute({ name: 'session', modeIds: [modeId] })}
-          onGarden={() => setRoute({ name: 'garden' })}
+          onTown={() => setRoute({ name: 'town' })}
           onParents={() => setRoute({ name: 'parents' })}
           onProfiles={() => setRoute({ name: 'profiles' })}
         />

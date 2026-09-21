@@ -119,6 +119,34 @@ export const TUNING = {
   sproutAtHalfLifeDays: 1,
   flowerAtHalfLifeDays: 7,
 
+  /* ---- Letter Town: the nut economy ---- */
+  town: {
+    /** Slot prices. Price order is gate order: the cheapest is always the one
+     *  that is always open. The friend costs exactly the gold-star bonus. */
+    price: { front: 3, back: 5, friend: 7 },
+    extraPrice: 10,
+    bonus: {
+      /** Per letter that reached mastered during the round. Pays for its friend. */
+      star: 7,
+      /** First unguessable correct answer on a letter. Pays for a front item. */
+      firstWrite: 3,
+      /** First round of the day after a gap of this many days or more. */
+      welcomeBack: 2,
+      welcomeBackAfterDays: 3,
+      /** First round of any new calendar day. */
+      newDay: 1,
+      /** Any round, at this probability. Unscheduled on purpose. */
+      surprise: 1,
+      surpriseChance: 0.12,
+    },
+    /** The very first round can always buy something. */
+    firstRoundFloor: 3,
+    /** Days played that open each town-wide extra. */
+    extraAt: { clouds: 2, sky: 5, tram: 9, night: 14, balloons: 20, fireworks: 28 },
+    /** Share of a focused round given to the letter the child chose. */
+    focusShare: 0.4,
+  },
+
   /* ---- storage ---- */
   historyLimit: 40,
 } as const

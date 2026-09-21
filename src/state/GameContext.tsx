@@ -8,7 +8,8 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import type { Profile, Settings, Store } from '../storage/schema'
+import type { ExtraId, Profile, Settings, SlotId, Store } from '../storage/schema'
+import { buyExtra as buyExtraItem, buyItem } from '../engine/town'
 import { newProfile } from '../storage/schema'
 import {
   activeProfile,
@@ -41,6 +42,9 @@ interface GameValue {
   /** Answer to "which letters does the child already know". */
   readonly placeKnown: (letters: readonly LetterId[]) => void
   readonly closeRound: (result: RoundResult) => void
+  /** Buys and places a Letter Town item. A refused purchase changes nothing. */
+  readonly buy: (letter: LetterId, slot: SlotId) => void
+  readonly buyExtra: (extra: ExtraId) => void
   readonly importStore: (store: Store) => void
 }
 
@@ -120,6 +124,9 @@ export function GameProvider({ children }: { readonly children: ReactNode }) {
         patchProfile((current) => placeKnownLetters(current, letters, Date.now())),
       closeRound: (result) =>
         patchProfile((current) => finishRound(current, result, Date.now())),
+      buy: (letter, slot) =>
+        patchProfile((current) => buyItem(current, letter, slot, Date.now())),
+      buyExtra: (extra) => patchProfile((current) => buyExtraItem(current, extra)),
       importStore: (next) => setStore(next),
     }),
     [store, profile, saveFailed, patchProfile],

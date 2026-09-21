@@ -20,7 +20,8 @@ import {
   placeKnownLetters,
 } from '../src/engine/apply'
 import { allStatuses, masteredCount } from '../src/engine/mastery'
-import { seedsForRound } from '../src/engine/garden'
+import { nutsForRound } from '../src/engine/nuts'
+import { buyItem, nextPurchase, townCompletion } from '../src/engine/town'
 import { newProfile, type Profile } from '../src/storage/schema'
 import { LETTER_IDS } from '../src/data/letters'
 import { MODES } from '../src/modes/registry'
@@ -66,6 +67,7 @@ function play(): void {
   })
   if (plan.items.length === 0) return
   profile = introduceLetters(profile, plan.introduced)
+  const before = profile
 
   let correct = 0
   let assisted = 0
@@ -109,6 +111,13 @@ function play(): void {
     now += 6000
   }
 
+  const award = nutsForRound(
+    before,
+    profile,
+    { items: plan.items.length, correct, letters: [...letters] as never },
+    now,
+    rng,
+  )
   profile = finishRound(
     profile,
     {
@@ -117,10 +126,23 @@ function play(): void {
       assisted,
       seconds: plan.items.length * 6,
       letters: [...letters] as never,
-      seeds: seedsForRound(correct, plan.items.length),
+      nuts: award.total,
     },
     now,
   )
+  // The synthetic child spends like a real one: whatever is buyable, at once.
+  for (let guard = 0; guard < 4; guard += 1) {
+    const target = nextPurchase(profile, now)
+    if (!target) break
+    profile = buyItem(profile, target.letter, target.slot, now)
+  }
+}
+
+/** Deterministic, so two runs with the same arguments print the same curve. */
+let seed = 12345
+function rng(): number {
+  seed = (seed * 1103515245 + 12345) % 2147483648
+  return seed / 2147483648
 }
 
 const rows: string[] = []
@@ -136,7 +158,7 @@ for (let day = 1; day <= days; day += 1) {
   rows.push(
     `day ${String(day).padStart(2)}  introduced ${String(profile.introduced.length).padStart(2)}` +
       `  learning ${String(learning).padStart(2)}  strong ${String(strong).padStart(2)}` +
-      `  mastered ${String(mastered).padStart(2)}  seeds ${profile.seeds}`,
+      `  mastered ${String(mastered).padStart(2)}  nuts earned ${String(profile.seedsEarned).padStart(3)}  town ${townCompletion(profile.town).owned}/78`,
   )
   // Next day.
   now = profile.createdAt + day * DAY_MS + 16 * 60 * 60 * 1000

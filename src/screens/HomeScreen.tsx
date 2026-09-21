@@ -12,7 +12,7 @@ import './HomeScreen.css'
 interface HomeScreenProps {
   readonly onPlay: () => void
   readonly onPickMode: (modeId: ModeId) => void
-  readonly onGarden: () => void
+  readonly onTown: () => void
   readonly onParents: () => void
   readonly onProfiles: () => void
 }
@@ -20,7 +20,7 @@ interface HomeScreenProps {
 export function HomeScreen({
   onPlay,
   onPickMode,
-  onGarden,
+  onTown,
   onParents,
   onProfiles,
 }: HomeScreenProps) {
@@ -63,8 +63,8 @@ export function HomeScreen({
           <Button onPress={onPlay} size="lg" tone="primary">
             ▶︎ Play
           </Button>
-          <Button onPress={onGarden} size="lg" tone="mint">
-            🌱 My garden
+          <Button onPress={onTown} size="lg" tone="mint">
+            🏙️ My town
           </Button>
         </div>
 
